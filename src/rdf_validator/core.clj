@@ -36,7 +36,7 @@
 (defmethod uri->repository :default [uri]
   (file->repository (io/file (str uri))))
 
-(defn- parse-endpoint [endpoint-str]
+(defn parse-endpoint [endpoint-str]
   (try
     (uri->repository (URI. endpoint-str))
     (catch URISyntaxException ex
