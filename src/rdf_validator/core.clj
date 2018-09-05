@@ -5,7 +5,8 @@
             [grafter.rdf :as rdf]
             [grafter.rdf.repository :as repo])
   (:import [java.net URI URISyntaxException]
-           [java.io File]))
+           [org.apache.jena.query Query QueryFactory Syntax]
+           [java.io File FileFilter]))
 
 (defn file->repository [^File f]
   (if (.isDirectory f)
@@ -46,7 +47,9 @@
   [["-s" "--suite SUITE" "Test suite file or directory"
     :default []
     :parse-fn io/file
-    :validate [(fn [f] true) "File does not exist"]
+    :validate [(fn [f]
+                 ;;TODO: check file exists
+                 true) "File does not exist"]
     :assoc-fn (fn [m k v] (update-in m [k] conj v))]
    ["-e" "--endpoint ENDPOINT" "SPARQL data endpoint to validate"
     :parse-fn parse-endpoint]])
@@ -62,13 +65,43 @@
     (println)
     (usage summary)))
 
+(defn load-test-case [^File f]
+  (let [^String sparql-str (slurp f)
+        query (QueryFactory/create sparql-str Syntax/syntaxSPARQL_11)]
+    {:source-file f
+     :query-string sparql-str}))
+
+(defn load-test-cases [^File f]
+  (if (.isDirectory f)
+    (mapcat load-test-cases (.listFiles f))
+    [(load-test-case f)]))
+
+(def sparql-file-filter
+  (reify FileFilter
+    (accept [this pathname]
+      (let [file-name (.getName pathname)]
+        (.endsWith file-name ".sparql")))))
+
 (defn -main
   "I don't do a whole lot ... yet."
   [& args]
-  (let [{:keys [errors] :as result} (cli/parse-opts args cli-options)]
+  (let [{:keys [errors options] :as result} (cli/parse-opts args cli-options)]
     (if (nil? errors)
-      (do
-        (println "RUNNING...")
+      (let [suites (:suite options)
+            repository (:endpoint options)
+            test-cases (mapcat load-test-cases suites)]
+        (doseq [{:keys [source-file query-string]} test-cases]
+          (println "File: " (.getAbsolutePath source-file))
+          (println query-string)
+
+          (let [result (repo/query repository query-string)]
+            (if (sequential? result)
+              (doseq [bindings result]
+                (println bindings))
+              (println result)))
+          (println))
+
+        ;;TODO: run tests
         (System/exit 0))
       (do (invalid-args result)
           (System/exit 1)))))
