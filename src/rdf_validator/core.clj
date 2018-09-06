@@ -3,7 +3,8 @@
   (:require [clojure.java.io :as io]
             [clojure.tools.cli :as cli]
             [grafter.rdf :as rdf]
-            [grafter.rdf.repository :as repo])
+            [grafter.rdf.repository :as repo]
+            [clojure.string :as string])
   (:import [java.net URI URISyntaxException]
            [org.apache.jena.query Query QueryFactory Syntax]
            [java.io File FileFilter]))
@@ -85,28 +86,36 @@
 
 (defmethod run-test-case :sparql-ask [{:keys [query-string source-file] :as test-case} repository]
   (let [failed (repo/query repository query-string)]
-    (println "File: " (.getAbsolutePath source-file))
-    (println query-string)
-    (when failed
-      (println)
-      (println "FAILED"))))
+    {:source-file source-file
+     :result (if failed :failed :passed)
+     :errors (if failed ["ASK query returned true"] [])}))
 
 (defmethod run-test-case :sparql-select [{:keys [query-string source-file] :as test-case} repository]
-  (let [results (vec (repo/query repository query-string))]
-    (println "File: " (.getAbsolutePath source-file))
-    (println query-string)
+  (let [results (vec (repo/query repository query-string))
+        failed (pos? (count results))]
+    {:source-file source-file
+     :result (if failed :failed :passed)
+     :errors (mapv str results)}))
 
-    (when (pos? (count results))
-      (println)
-      (println "FAILED")
-      (doseq [bindings results]
-        (println bindings)))))
+(defmethod run-test-case :sparql-ignored [{:keys [source-file]} _repository]
+  {:source-file source-file
+   :result :ignored
+   :errors []})
 
-(defmethod run-test-case :sparql-ignored [{:keys [query-string source-file]} repository]
-  (println "File: " (.getAbsolutePath source-file))
-  (println query-string)
-  (println)
-  (println "IGNORED"))
+(defn display-test-result [{:keys [number source-file result errors] :as test-result}]
+  (println (format "%d %s: %s" number (.getAbsolutePath source-file) (string/upper-case (name result))))
+  (doseq [error errors]
+    (println (format "\t%s" error)))
+  (when (pos? (count errors))
+    (println)))
+
+(defn run-test-cases [test-cases repository]
+  (reduce (fn [summary [test-index test-case]]
+            (let [{:keys [result] :as test-result} (run-test-case test-case repository)]
+              (display-test-result (assoc test-result :number (inc test-index)))
+              (update summary result inc)))
+          {:failed 0 :passed 0 :ignored 0}
+          (map-indexed vector test-cases)))
 
 (defn -main
   [& args]
@@ -115,11 +124,9 @@
       (let [suites (:suite options)
             repository (:endpoint options)
             test-cases (mapcat load-test-cases suites)
-            case-count (count test-cases)]
-        (doseq [[test-index test-case] (map-indexed vector test-cases)]
-          (printf "Running test %d of %d\n\n" (inc test-index) case-count)
-          (run-test-case test-case repository)
-          (println))
-        (System/exit 0))
+            {:keys [passed failed ignored]} (run-test-cases test-cases repository)]
+        (println)
+        (println (format "Passed %d Failed %d Ignored %d" passed failed ignored))
+        (System/exit failed))
       (do (invalid-args result)
           (System/exit 1)))))
