@@ -1,0 +1,29 @@
+#IC-16. Single measure on measure dimension observation - In a qb:DataSet which uses a Measure dimension then each qb:Observation must only have a value for one measure (by IC-15 this will be the measure corresponding to its qb:measureType). 
+
+PREFIX rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX skos:    <http://www.w3.org/2004/02/skos/core#>
+PREFIX qb:      <http://purl.org/linked-data/cube#>
+PREFIX xsd:     <http://www.w3.org/2001/XMLSchema#>
+PREFIX owl:     <http://www.w3.org/2002/07/owl#>
+
+SELECT DISTINCT (?obs AS ?failingSubject) 
+WHERE {
+    # Observation with measureType
+    ?obs qb:dataSet/qb:structure ?dsd ;
+         qb:measureType ?measure ;
+         ?omeasure [] .
+    # Any measure on the observation
+    ?dsd qb:component/qb:componentProperty qb:measureType ;
+         qb:component/qb:componentProperty ?omeasure .
+    ?omeasure a qb:MeasureProperty .
+    # Must be the same as the measureType
+    FILTER (?omeasure != ?measure)
+}
+
+
+#######################################################################
+####                 ORIGINAL ASK QUERY FROM SPEC  IC-16           ####
+# 
+# 
+#######################################################################

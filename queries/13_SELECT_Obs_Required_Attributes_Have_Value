@@ -1,0 +1,28 @@
+# IC-13. Required attributes - Every qb:Observation has a value for each declared attribute that is marked as required.
+# Note - Querying within data model for properties that are types inherited from qb:ComponentProperty
+
+PREFIX rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX skos:    <http://www.w3.org/2004/02/skos/core#>
+PREFIX qb:      <http://purl.org/linked-data/cube#>
+PREFIX xsd:     <http://www.w3.org/2001/XMLSchema#>
+PREFIX owl:     <http://www.w3.org/2002/07/owl#>
+
+SELECT DISTINCT (?attr AS ?requiredAttributeWithoutValue) ?obs
+WHERE {
+	SELECT ?componentProperty WHERE {
+	  	?componentPropertyType rdfs:subClassOf qb:ComponentProperty . 
+	  	?componentProperty a ?componentPropertyType . 
+	}
+    ?obs qb:dataSet/qb:structure/qb:component ?component .
+    ?component qb:componentRequired "true"^^xsd:boolean ;
+               ?componentProperty ?attr .
+    FILTER NOT EXISTS { ?obs ?attr [] }
+}
+
+
+#######################################################################
+####                 ORIGINAL ASK QUERY FROM SPEC  IC-13           ####
+# 
+# 
+#######################################################################

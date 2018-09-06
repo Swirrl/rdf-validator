@@ -1,0 +1,27 @@
+#IC-8. Slice Keys consistent with DSD - Every qb:componentProperty on a qb:SliceKey must also be declared as a qb:component of the associated qb:DataStructureDefinition. 
+# Note - Querying within data model for properties that are types inherited from qb:ComponentProperty
+
+PREFIX rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX skos:    <http://www.w3.org/2004/02/skos/core#>
+PREFIX qb:      <http://purl.org/linked-data/cube#>
+PREFIX xsd:     <http://www.w3.org/2001/XMLSchema#>
+PREFIX owl:     <http://www.w3.org/2002/07/owl#>
+
+SELECT DISTINCT (?prop AS ?propertyMissingFromDSD) 
+WHERE {
+	SELECT ?componentProperty WHERE {
+	  	?componentPropertyType rdfs:subClassOf qb:ComponentProperty . 
+	  	?componentProperty a ?componentPropertyType . 
+	}
+  ?slicekey a qb:SliceKey;
+      ?componentProperty ?prop .
+  ?dsd qb:sliceKey ?slicekey .
+  FILTER NOT EXISTS { ?dsd qb:component [?componentProperty ?prop] }
+}
+
+#######################################################################
+####                 ORIGINAL ASK QUERY FROM SPEC  IC-8            ####
+# 
+# 
+#######################################################################
