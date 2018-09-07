@@ -10,12 +10,14 @@ PREFIX owl:     <http://www.w3.org/2002/07/owl#>
 
 SELECT DISTINCT (?slice AS ?sliceWithMissingValuesOnDimension) ?dimension  
 WHERE {
-	SELECT ?componentProperty WHERE {
-	  	?componentPropertyType rdfs:subClassOf qb:ComponentProperty . 
-	  	?componentProperty a ?componentPropertyType . 
-	}
-  ?slice qb:sliceStructure [?componentProperty ?dimension] .
-  FILTER NOT EXISTS { ?slice ?dimension [] }
+    { SELECT ?componentProperty WHERE {
+      	  	 ?componentPropertyType rdfs:subClassOf qb:ComponentProperty .
+      	  	 ?componentProperty a ?componentPropertyType .
+      	}
+    }
+
+    ?slice qb:sliceStructure [?componentProperty ?dimension] .
+    FILTER NOT EXISTS { ?slice ?dimension [] }
 }
 
 
