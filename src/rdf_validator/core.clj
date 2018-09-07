@@ -67,15 +67,20 @@
     (usage summary)))
 
 (defn load-test-case [^File f]
-  (let [^String sparql-str (slurp f)
-        query (QueryFactory/create sparql-str Syntax/syntaxSPARQL_11)
-        type (cond
-               (.isAskType query) :sparql-ask
-               (.isSelectType query) :sparql-select
-               :else :sparql-ignored)]
-    {:source-file f
-     :type type
-     :query-string sparql-str}))
+  (try
+    (let [^String sparql-str (slurp f)
+          query (QueryFactory/create sparql-str Syntax/syntaxSPARQL_11)
+          type (cond
+                 (.isAskType query) :sparql-ask
+                 (.isSelectType query) :sparql-select
+                 :else :sparql-ignored)]
+      {:source-file  f
+       :type         type
+       :query-string sparql-str})
+    (catch Exception ex
+      {:source-file f
+       :type :invalid
+       :exception ex})))
 
 (defn load-test-cases [^File f]
   (if (.isDirectory f)
@@ -85,24 +90,39 @@
 (defmulti run-test-case (fn [test-case repository] (:type test-case)))
 
 (defmethod run-test-case :sparql-ask [{:keys [query-string source-file] :as test-case} repository]
-  (let [failed (repo/query repository query-string)]
-    {:source-file source-file
-     :result (if failed :failed :passed)
-     :errors (if failed ["ASK query returned true"] [])}))
+  (try
+    (let [failed (repo/query repository query-string)]
+      {:source-file source-file
+       :result      (if failed :failed :passed)
+       :errors      (if failed ["ASK query returned true"] [])})
+    (catch Exception ex
+      {:source-file source-file
+       :result :errored
+       :errors [(.getMessage ex)]})))
 
 (defmethod run-test-case :sparql-select [{:keys [query-string source-file] :as test-case} repository]
-  (let [results (vec (repo/query repository query-string))
-        failed (pos? (count results))]
-    {:source-file source-file
-     :result (if failed :failed :passed)
-     :errors (mapv str results)}))
+  (try
+    (let [results (vec (repo/query repository query-string))
+          failed (pos? (count results))]
+      {:source-file source-file
+       :result      (if failed :failed :passed)
+       :errors      (mapv str results)})
+    (catch Exception ex
+      {:source-file source-file
+       :result :errored
+       :errors [(.getMessage ex)]})))
 
 (defmethod run-test-case :sparql-ignored [{:keys [source-file]} _repository]
   {:source-file source-file
    :result :ignored
    :errors []})
 
-(defn display-test-result [{:keys [number source-file result errors] :as test-result}]
+(defmethod run-test-case :invalid [{:keys [source-file ^Throwable exception]} _repository]
+  {:source-file source-file
+   :result :errored
+   :errors [(.getMessage exception)]})
+
+(defn display-test-result [{:keys [number ^File source-file result errors] :as test-result}]
   (println (format "%d %s: %s" number (.getAbsolutePath source-file) (string/upper-case (name result))))
   (doseq [error errors]
     (println (format "\t%s" error)))
@@ -114,7 +134,7 @@
             (let [{:keys [result] :as test-result} (run-test-case test-case repository)]
               (display-test-result (assoc test-result :number (inc test-index)))
               (update summary result inc)))
-          {:failed 0 :passed 0 :ignored 0}
+          {:failed 0 :passed 0 :errored 0 :ignored 0}
           (map-indexed vector test-cases)))
 
 (defn -main
@@ -124,9 +144,9 @@
       (let [suites (:suite options)
             repository (:endpoint options)
             test-cases (mapcat load-test-cases suites)
-            {:keys [passed failed ignored]} (run-test-cases test-cases repository)]
+            {:keys [passed failed errored ignored]} (run-test-cases test-cases repository)]
         (println)
-        (println (format "Passed %d Failed %d Ignored %d" passed failed ignored))
-        (System/exit failed))
+        (println (format "Passed %d Failed %d Errored %d Ignored %d" passed failed errored ignored))
+        (System/exit (+ failed errored)))
       (do (invalid-args result)
           (System/exit 1)))))
