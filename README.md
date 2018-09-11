@@ -53,7 +53,7 @@ SPARQL SELECT queries are considered to have failed if they return any matching 
 
 ## License
 
-Copyright © 2018 FIXME
+Copyright © 2018 Swirrl IT Ltd.
 
 Distributed under the Eclipse Public License either version 1.0 or (at
 your option) any later version.
