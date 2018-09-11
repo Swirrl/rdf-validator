@@ -1,6 +1,3 @@
-#IC-11. All dimensions required - Every qb:Observation has a value for each dimension declared in its associated qb:DataStructureDefinition.
-# TODO: (JW) check the sequential path part of the query against some real Swirrl data
-
 PREFIX rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX skos:    <http://www.w3.org/2004/02/skos/core#>
@@ -14,6 +11,9 @@ WHERE {
     ?dim a qb:DimensionProperty;
     FILTER NOT EXISTS { ?obs ?dim [] }
 }
+
+# IC-11. All dimensions required - Every qb:Observation has a value for each dimension declared in its associated qb:DataStructureDefinition.
+# TODO: (JW) check the sequential path part of the query against some real Swirrl data
 
 #######################################################################
 ####                 ORIGINAL ASK QUERY FROM SPEC  IC-11           ####

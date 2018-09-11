@@ -1,6 +1,3 @@
-#IC-12. No duplicate observations - No two qb:Observations in the same qb:DataSet may have the same value for all dimensions. 
-# TODO: (JW) sequence path probably needs fixing for swirrl pmd data 
-
 PREFIX rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX skos:    <http://www.w3.org/2004/02/skos/core#>
@@ -25,6 +22,9 @@ WHERE {
     } GROUP BY ?obs1 ?obs2
   }
 }
+
+# IC-12. No duplicate observations - No two qb:Observations in the same qb:DataSet may have the same value for all dimensions.
+# TODO: (JW) sequence path probably needs fixing for swirrl pmd data
 
 #######################################################################
 ####                 ORIGINAL ASK QUERY FROM SPEC  IC-12           ####
