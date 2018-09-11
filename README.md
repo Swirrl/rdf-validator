@@ -35,7 +35,13 @@ SPARQL endpoints can also be loaded from a file containing serialised RDF triple
     
 Multiple test cases can be specified:
     
-        $ java -jar rdf-validator-standalone.jar --endpoint data.ttl --suite test1.sparql --suite test2.sparql 
+    $ java -jar rdf-validator-standalone.jar --endpoint data.ttl --suite test1.sparql --suite test2.sparql 
+        
+The RDF dataset can also be specified:
+
+    $ java -jar rdf-validator-standalone.jar --endpoint data.ttl --graph http://graph1 --graph http://graph2 --suite test1.sparql
+    
+Graphs are added a named graphs and included in the default graph. 
 
 ## Writing test cases
 
