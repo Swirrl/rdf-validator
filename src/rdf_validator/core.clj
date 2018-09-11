@@ -6,8 +6,8 @@
             [grafter.rdf.repository :as repo]
             [clojure.string :as string])
   (:import [java.net URI URISyntaxException]
-           [org.apache.jena.query Query QueryFactory Syntax]
-           [java.io File FileFilter]))
+           [org.apache.jena.query QueryFactory Syntax]
+           [java.io File]))
 
 (defn file->repository [^File f]
   (if (.isDirectory f)
