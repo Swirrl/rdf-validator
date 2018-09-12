@@ -7,15 +7,28 @@ PREFIX owl:     <http://www.w3.org/2002/07/owl#>
 
 SELECT (?dim AS ?dimensionWithNoCodeList) ?skosConcept
 WHERE {
-  { SELECT ?skosConcept WHERE { ?skosConcept rdfs:subClassOf skos:Concept } }
+  
+  {
+  	SELECT ?concept {
+  	{
+  		BIND(skos:Concept as ?concept)
+  	}
+  	UNION
+  	{ 	
+        SELECT ?concept WHERE 
+        { ?concept rdfs:subClassOf skos:Concept }   
+		}
+  	}
+  }
+
   ?dim a qb:DimensionProperty ;
-       rdfs:range ?skosConcept .
+       rdfs:range ?concept .
   FILTER NOT EXISTS { ?dim qb:codeList [] }
 }
 
 #! IC-5. Concept dimensions have code lists - Every dimension with range skos:Concept must have a qb:codeList.
 
-# Note - Querying for subClassOf skos:Concept within data model
+# Note - this includes a reasoning workaround by looking for subClasses of skos:Concept. 
 #######################################################################
 ####                 ORIGINAL ASK QUERY FROM SPEC  IC-5            ####
 # 

@@ -7,12 +7,27 @@ PREFIX owl:     <http://www.w3.org/2002/07/owl#>
 
 SELECT (?dsd AS ?dsdWithoutDeclaredMeasure) 
 WHERE {
+
+  {
+  	SELECT ?cp {
+  	{
+  		BIND(qb:componentProperty as ?cp)
+  	}
+  	UNION
+  	{ 	SELECT ?cp 
+  		WHERE { 
+  			?cp rdfs:subPropertyOf+ qb:componentProperty . }  
+		}
+  	}
+  }
+
   ?dsd a qb:DataStructureDefinition .
-  FILTER NOT EXISTS { ?dsd qb:component [qb:componentProperty [a qb:MeasureProperty]] }
+  FILTER NOT EXISTS { ?dsd qb:component [?cp [a qb:MeasureProperty]] }
 }
 
 #! IC-3. DSD includes measure - Every qb:DataStructureDefinition must include at least one declared measure. 
 
+# Note - this includes a reasoning workaround by looking for subProperties of qb:componentProperty. 
 #######################################################################
 ####                ORIGINAL ASK QUERY FROM SPEC  IC-3            ####
 # 

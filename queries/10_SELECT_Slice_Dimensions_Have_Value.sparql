@@ -7,21 +7,34 @@ PREFIX owl:     <http://www.w3.org/2002/07/owl#>
 
 SELECT (?slice AS ?sliceWithMissingValuesOnDimension) ?dimension  
 WHERE {
-    { SELECT ?componentProperty WHERE {
-      	  	 ?componentPropertyType rdfs:subClassOf qb:ComponentProperty .
-      	  	 ?componentProperty a ?componentPropertyType .
-      	}
-    }
 
-    ?slice qb:sliceStructure [?componentProperty ?dimension] .
+    {
+	  	SELECT ?cp {
+	  	{
+	  		BIND(qb:componentProperty as ?cp)
+	  	}
+	  	UNION
+	  	{ 	SELECT ?cp 
+	  		WHERE { 
+	  			?cp rdfs:subPropertyOf+ qb:componentProperty . }  
+			}
+	  	}
+	  }
+
+    ?slice qb:sliceStructure [?cp ?dimension] .
     FILTER NOT EXISTS { ?slice ?dimension [] }
 }
 
 #! IC-10. Slice dimensions complete - Every qb:Slice must have a value for every dimension declared in its qb:sliceStructure.
 
-# Note - Querying within data model for properties that are types inherited from qb:ComponentProperty
+# Note - Querying within data model for properties that are types inherited from qb:componentProperty
+
 #######################################################################
 ####                 ORIGINAL ASK QUERY FROM SPEC  IC-10           ####
 # 
+# ASK {
+#   ?slice qb:sliceStructure [qb:componentProperty ?dim] .
+#   FILTER NOT EXISTS { ?slice ?dim [] }
+# }
 # 
 #######################################################################

@@ -7,12 +7,30 @@ PREFIX owl:     <http://www.w3.org/2002/07/owl#>
 
 SELECT (?obs AS ?obsMissingValueForMeasure) ?measure  
 WHERE {
+
+	{
+	  	SELECT ?cp {
+	  	{
+	  		BIND(qb:componentProperty as ?cp)
+	  	}
+	  	UNION
+	  	{ 	SELECT ?cp 
+	  		WHERE { 
+	  			?cp rdfs:subPropertyOf+ qb:componentProperty . }  
+			}
+	  	}
+	}
+
     # Observation in a non-measureType cube
     ?obs qb:dataSet/qb:structure ?dsd .
-    FILTER NOT EXISTS { ?dsd qb:component/qb:componentProperty qb:measureType }
+    FILTER NOT EXISTS { 
+    	?dsd qb:component ?component .
+    	?component ?cp qb:measureType 
+	}
 
     # verify every measure is present
-    ?dsd qb:component/qb:componentProperty ?measure .
+    ?dsd qb:component ?component . 
+    ?component ?cp ?measure .
     ?measure a qb:MeasureProperty;
     FILTER NOT EXISTS { ?obs ?measure [] }
 }
@@ -22,5 +40,15 @@ WHERE {
 #######################################################################
 ####                 ORIGINAL ASK QUERY FROM SPEC  IC-14           ####
 # 
+# ASK {
+#     # Observation in a non-measureType cube
+#     ?obs qb:dataSet/qb:structure ?dsd .
+#     FILTER NOT EXISTS { ?dsd qb:component/qb:componentProperty qb:measureType }
+# 
+#     # verify every measure is present
+#     ?dsd qb:component/qb:componentProperty ?measure .
+#     ?measure a qb:MeasureProperty;
+#     FILTER NOT EXISTS { ?obs ?measure [] }
+# }
 # 
 #######################################################################

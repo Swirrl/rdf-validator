@@ -43,6 +43,7 @@ WHERE {
 
 #! IC-17. All measures present in measures dimension cube -  In a qb:DataSet which uses a Measure dimension then if there is a Observation for some combination of non-measure dimensions then there must be other Observations with the same non-measure dimension values for each of the declared measures. 
 
+#TODO
 #######################################################################
 ####                 ORIGINAL ASK QUERY FROM SPEC  IC-17           ####
 # 

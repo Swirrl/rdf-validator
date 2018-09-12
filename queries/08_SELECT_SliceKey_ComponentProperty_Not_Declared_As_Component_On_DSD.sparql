@@ -6,24 +6,39 @@ PREFIX xsd:     <http://www.w3.org/2001/XMLSchema#>
 PREFIX owl:     <http://www.w3.org/2002/07/owl#>
 
 SELECT (?prop AS ?propertyMissingFromDSD) WHERE {
+
     {
-      SELECT ?componentProperty WHERE {
-      	  	 ?componentPropertyType rdfs:subClassOf qb:ComponentProperty .
-      	  	 ?componentProperty a ?componentPropertyType .
-      	}
-    }
+	  	SELECT ?cp {
+	  	{
+	  		BIND(qb:componentProperty as ?cp)
+	  	}
+	  	UNION
+	  	{ 	SELECT ?cp 
+	  		WHERE { 
+	  			?cp rdfs:subPropertyOf+ qb:componentProperty . }  
+			}
+	  	}
+  	}
 
     ?slicekey a qb:SliceKey;
-              ?componentProperty ?prop .
+              ?cp ?prop .
     ?dsd qb:sliceKey ?slicekey .
-    FILTER NOT EXISTS { ?dsd qb:component [?componentProperty ?prop] }
+    FILTER NOT EXISTS { ?dsd qb:component [?cp ?prop] }
 }
 
 #!  IC-8. Slice Keys consistent with DSD - Every qb:componentProperty on a qb:SliceKey must also be declared as a qb:component of the associated qb:DataStructureDefinition.
 
 # Note - Querying within data model for properties that are types inherited from qb:ComponentProperty
+# Q - will this miss cases where the slice key and dsd properties have mismatched (but sibling) types
+
 #######################################################################
 ####                 ORIGINAL ASK QUERY FROM SPEC  IC-8            ####
 # 
+# ASK {
+#   ?slicekey a qb:SliceKey;
+#       qb:componentProperty ?prop .
+#   ?dsd qb:sliceKey ?slicekey .
+#   FILTER NOT EXISTS { ?dsd qb:component [qb:componentProperty ?prop] }
+# }
 # 
 #######################################################################

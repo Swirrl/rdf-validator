@@ -21,5 +21,17 @@ GROUP BY ?slice
 #######################################################################
 ####                 ORIGINAL ASK QUERY FROM SPEC  IC-9            ####
 # 
+# ASK {
+#   {
+#     # Slice has a key
+#     ?slice a qb:Slice .
+#     FILTER NOT EXISTS { ?slice qb:sliceStructure ?key }
+#   } UNION {
+#     # Slice has just one key
+#     ?slice a qb:Slice ;
+#            qb:sliceStructure ?key1, ?key2;
+#     FILTER (?key1 != ?key2)
+#   }
+# }
 # 
 #######################################################################

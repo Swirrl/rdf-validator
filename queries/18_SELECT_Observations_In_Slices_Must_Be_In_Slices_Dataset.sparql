@@ -13,7 +13,7 @@ WHERE {
 }
 
 #! IC-18. Consistent data set links - If a qb:DataSet D has a qb:slice S, and S has an qb:observation O, then the qb:dataSet corresponding to O must be D. 
-
+#TODO
 #######################################################################
 ####                 ORIGINAL ASK QUERY FROM SPEC  IC-18           ####
 # 

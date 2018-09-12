@@ -7,6 +7,20 @@ PREFIX owl:     <http://www.w3.org/2002/07/owl#>
 
 SELECT (?obs AS ?obsWithIncorrectNumberOfMeasures) 
 WHERE {
+
+    {
+        SELECT ?cp {
+        {
+            BIND(qb:componentProperty as ?cp)
+        }
+        UNION
+        {   SELECT ?cp 
+            WHERE { 
+                ?cp rdfs:subPropertyOf+ qb:componentProperty . }  
+            }
+        }
+    }
+
     # Observation with measureType
     ?obs qb:dataSet/qb:structure ?dsd ;
          qb:measureType ?measure ;
@@ -21,6 +35,7 @@ WHERE {
 
 #! IC-16. Single measure on measure dimension observation - In a qb:DataSet which uses a Measure dimension then each qb:Observation must only have a value for one measure (by IC-15 this will be the measure corresponding to its qb:measureType). 
 
+#TODO
 #######################################################################
 ####                 ORIGINAL ASK QUERY FROM SPEC  IC-16           ####
 # 
