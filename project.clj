@@ -7,7 +7,8 @@
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojure/tools.cli "0.3.7"]
                  [grafter "0.11.4"]
-                 [org.apache.jena/apache-jena-libs "3.8.0" :extension "pom"]]
+                 [org.apache.jena/apache-jena-libs "3.8.0" :extension "pom"]
+                 [selmer "1.12.0"]]
   :main ^:skip-aot rdf-validator.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}})

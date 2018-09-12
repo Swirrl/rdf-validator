@@ -4,7 +4,10 @@
             [clojure.tools.cli :as cli]
             [grafter.rdf :as rdf]
             [grafter.rdf.repository :as repo]
-            [clojure.string :as string])
+            [clojure.string :as string]
+            [selmer.parser :as selmer]
+            [selmer.util :refer [without-escaping set-missing-value-formatter!]]
+            [clojure.edn :as edn])
   (:import [java.net URI URISyntaxException]
            [org.apache.jena.query QueryFactory Syntax]
            [java.io File]))
@@ -44,6 +47,9 @@
     (catch URISyntaxException ex
       (file->repository (io/file endpoint-str)))))
 
+(defn parse-variables-file [f]
+  (edn/read-string (slurp f)))
+
 (def cli-options
   [["-s" "--suite SUITE" "Test suite file or directory"
     :default []
@@ -53,7 +59,10 @@
                  true) "File does not exist"]
     :assoc-fn (fn [m k v] (update-in m [k] conj v))]
    ["-e" "--endpoint ENDPOINT" "SPARQL data endpoint to validate"
-    :parse-fn parse-endpoint]])
+    :parse-fn parse-endpoint]
+   ["-v" "--variables FILE" "EDN file containing query variables"
+    :parse-fn parse-variables-file
+    :default {}]])
 
 (defn- usage [summary]
   (println "Usage:")
@@ -66,9 +75,18 @@
     (println)
     (usage summary)))
 
-(defn load-test-case [^File f]
+(defn on-missing-query-template-variable [{:keys [tag-value] :as tag} context]
+  (throw (ex-info (format "No variable specified for template variable '%s'" tag-value) {})))
+
+(set-missing-value-formatter! on-missing-query-template-variable)
+
+(defn load-sparql-template [f variables]
+  (let [query-string (slurp f)]
+    (without-escaping (selmer/render query-string variables))))
+
+(defn load-test-case [^File f query-variables]
   (try
-    (let [^String sparql-str (slurp f)
+    (let [^String sparql-str (load-sparql-template f query-variables)
           query (QueryFactory/create sparql-str Syntax/syntaxSPARQL_11)
           type (cond
                  (.isAskType query) :sparql-ask
@@ -82,10 +100,10 @@
        :type :invalid
        :exception ex})))
 
-(defn load-test-cases [^File f]
+(defn load-test-cases [^File f query-variables]
   (if (.isDirectory f)
-    (mapcat load-test-cases (.listFiles f))
-    [(load-test-case f)]))
+    (mapcat (fn [cf] (load-test-cases cf query-variables)) (.listFiles f))
+    [(load-test-case f query-variables)]))
 
 (defmulti run-test-case (fn [test-case repository] (:type test-case)))
 
@@ -143,10 +161,12 @@
     (if (nil? errors)
       (let [suites (:suite options)
             repository (:endpoint options)
-            test-cases (mapcat load-test-cases suites)
+            query-variables (:variables options)
+            test-cases (mapcat (fn [f] (load-test-cases f query-variables)) suites)
             {:keys [passed failed errored ignored]} (run-test-cases test-cases repository)]
         (println)
         (println (format "Passed %d Failed %d Errored %d Ignored %d" passed failed errored ignored))
         (System/exit (+ failed errored)))
       (do (invalid-args result)
           (System/exit 1)))))
+
