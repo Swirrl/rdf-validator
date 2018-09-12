@@ -1,0 +1,7 @@
+language: clojure
+lein: 2.7.1
+jdk:
+  - oraclejdk8
+
+after_success:
+  - lein uberjar
