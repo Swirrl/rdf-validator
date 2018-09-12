@@ -5,7 +5,7 @@ PREFIX qb:      <http://purl.org/linked-data/cube#>
 PREFIX xsd:     <http://www.w3.org/2001/XMLSchema#>
 PREFIX owl:     <http://www.w3.org/2002/07/owl#>
 
-SELECT DISTINCT (?attr AS ?requiredAttributeWithoutValue) ?obs WHERE {
+SELECT (?attr AS ?requiredAttributeWithoutValue) ?obs WHERE {
     {
       SELECT ?componentProperty WHERE {
       	  	?componentPropertyType rdfs:subClassOf qb:ComponentProperty .

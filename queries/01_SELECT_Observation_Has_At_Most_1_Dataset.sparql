@@ -5,13 +5,14 @@ PREFIX qb:      <http://purl.org/linked-data/cube#>
 PREFIX xsd:     <http://www.w3.org/2001/XMLSchema#>
 PREFIX owl:     <http://www.w3.org/2002/07/owl#>
 
-SELECT DISTINCT (?obs AS ?obsWithTooManyDatasetsAssociated) 
+SELECT (?obs AS ?obsWithTooManyDatasetsAssociated) 
 WHERE {
     # Check has just one data set
     ?obs a qb:Observation ;
        qb:dataSet ?dataset1, ?dataset2 .
     FILTER (?dataset1 != ?dataset2)
   }
+  GROUP BY ?obs
 
 #! IC-1. Unique DataSet - Every qb:Observation has exactly one associated qb:DataSet. Part (b) observations with too many datasets associated
 

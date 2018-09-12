@@ -5,7 +5,7 @@ PREFIX qb:      <http://purl.org/linked-data/cube#>
 PREFIX xsd:     <http://www.w3.org/2001/XMLSchema#>
 PREFIX owl:     <http://www.w3.org/2002/07/owl#>
 
-SELECT DISTINCT (?obs1 AS ?observation) (?obs2 AS ?duplicateObservation)
+SELECT (?obs1 AS ?observation) (?obs2 AS ?duplicateObservation)
 WHERE {
   FILTER( ?allEqual )
   {
@@ -22,6 +22,7 @@ WHERE {
     } GROUP BY ?obs1 ?obs2
   }
 }
+GROUP BY ?obs1 ?obs2
 
 #! IC-12. No duplicate observations - No two qb:Observations in the same qb:DataSet may have the same value for all dimensions.
 

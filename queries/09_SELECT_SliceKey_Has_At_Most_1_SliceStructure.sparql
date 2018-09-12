@@ -5,7 +5,7 @@ PREFIX qb:      <http://purl.org/linked-data/cube#>
 PREFIX xsd:     <http://www.w3.org/2001/XMLSchema#>
 PREFIX owl:     <http://www.w3.org/2002/07/owl#>
 
-SELECT DISTINCT (?slice AS ?slicesWithTooManySliceStructuresAssociated) 
+SELECT (?slice AS ?slicesWithTooManySliceStructuresAssociated) 
 WHERE {
    {
     # Slice has just one key
@@ -14,6 +14,7 @@ WHERE {
     FILTER (?key1 != ?key2)
   }
 }
+GROUP BY ?slice
 
 #! IC-9. Unique slice structure - Each qb:Slice must have exactly one associated qb:sliceStructure. Part (b) slice with too many sliceStructures associated
 

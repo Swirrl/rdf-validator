@@ -5,7 +5,7 @@ PREFIX qb:      <http://purl.org/linked-data/cube#>
 PREFIX xsd:     <http://www.w3.org/2001/XMLSchema#>
 PREFIX owl:     <http://www.w3.org/2002/07/owl#>
 
-SELECT DISTINCT (?sliceKey AS ?sliceKeyWithNoDSD) 
+SELECT (?sliceKey AS ?sliceKeyWithNoDSD) 
 WHERE {
     ?sliceKey a qb:SliceKey .
     FILTER NOT EXISTS { [a qb:DataStructureDefinition] qb:sliceKey ?sliceKey }
