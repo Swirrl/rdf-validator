@@ -17,9 +17,9 @@ WHERE {
     FILTER NOT EXISTS { ?slice ?dimension [] }
 }
 
-# IC-10. Slice dimensions complete - Every qb:Slice must have a value for every dimension declared in its qb:sliceStructure.
-# Note - Querying within data model for properties that are types inherited from qb:ComponentProperty
+#! IC-10. Slice dimensions complete - Every qb:Slice must have a value for every dimension declared in its qb:sliceStructure.
 
+# Note - Querying within data model for properties that are types inherited from qb:ComponentProperty
 #######################################################################
 ####                 ORIGINAL ASK QUERY FROM SPEC  IC-10           ####
 # 

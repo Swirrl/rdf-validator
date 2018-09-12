@@ -1,5 +1,3 @@
-# IC-2. Unique DSD - Every qb:DataSet has exactly one associated qb:DataStructureDefinition. Part (a) datasets with no associated DSDs
-
 PREFIX rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX skos:    <http://www.w3.org/2004/02/skos/core#>
@@ -7,7 +5,7 @@ PREFIX qb:      <http://purl.org/linked-data/cube#>
 PREFIX xsd:     <http://www.w3.org/2001/XMLSchema#>
 PREFIX owl:     <http://www.w3.org/2002/07/owl#>
 
-SELECT DISTINCT (?dataset AS ?datasetWithTooFewDefinitions)
+SELECT (?dataset AS ?datasetWithTooFewDefinitions)
 WHERE {
   {
     # Check dataset has a dsd
@@ -16,6 +14,7 @@ WHERE {
   } 
 }
 
+#! IC-2. Unique DSD - Every qb:DataSet has exactly one associated qb:DataStructureDefinition. Part (a) datasets with no associated DSDs
 
 #######################################################################
 ####                ORIGINAL ASK QUERY FROM SPEC  IC-2             ####

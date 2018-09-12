@@ -23,9 +23,9 @@ WHERE {
   }
 }
 
-# IC-12. No duplicate observations - No two qb:Observations in the same qb:DataSet may have the same value for all dimensions.
-# TODO: (JW) sequence path probably needs fixing for swirrl pmd data
+#! IC-12. No duplicate observations - No two qb:Observations in the same qb:DataSet may have the same value for all dimensions.
 
+# TODO: (JW) sequence path probably needs adjusting for swirrl pmd data
 #######################################################################
 ####                 ORIGINAL ASK QUERY FROM SPEC  IC-12           ####
 # 

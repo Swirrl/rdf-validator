@@ -1,5 +1,3 @@
-#IC-9. Unique slice structure - Each qb:Slice must have exactly one associated qb:sliceStructure. Part (b) slice with too many sliceStructures associated
-
 PREFIX rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX skos:    <http://www.w3.org/2004/02/skos/core#>
@@ -17,6 +15,7 @@ WHERE {
   }
 }
 
+#! IC-9. Unique slice structure - Each qb:Slice must have exactly one associated qb:sliceStructure. Part (b) slice with too many sliceStructures associated
 
 #######################################################################
 ####                 ORIGINAL ASK QUERY FROM SPEC  IC-9            ####

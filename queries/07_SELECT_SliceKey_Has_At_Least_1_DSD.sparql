@@ -1,5 +1,3 @@
-#IC-7. Slice Keys must be declared - Every qb:SliceKey must be associated with a qb:DataStructureDefinition. 
-
 PREFIX rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX skos:    <http://www.w3.org/2004/02/skos/core#>
@@ -12,6 +10,8 @@ WHERE {
     ?sliceKey a qb:SliceKey .
     FILTER NOT EXISTS { [a qb:DataStructureDefinition] qb:sliceKey ?sliceKey }
 }
+
+#! IC-7. Slice Keys must be declared - Every qb:SliceKey must be associated with a qb:DataStructureDefinition. 
 
 #######################################################################
 ####                 ORIGINAL ASK QUERY FROM SPEC  IC-7            ####

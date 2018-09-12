@@ -19,9 +19,9 @@ SELECT DISTINCT (?prop AS ?propertyMissingFromDSD) WHERE {
     FILTER NOT EXISTS { ?dsd qb:component [?componentProperty ?prop] }
 }
 
-# IC-8. Slice Keys consistent with DSD - Every qb:componentProperty on a qb:SliceKey must also be declared as a qb:component of the associated qb:DataStructureDefinition.
-# Note - Querying within data model for properties that are types inherited from qb:ComponentProperty
+#!  IC-8. Slice Keys consistent with DSD - Every qb:componentProperty on a qb:SliceKey must also be declared as a qb:component of the associated qb:DataStructureDefinition.
 
+# Note - Querying within data model for properties that are types inherited from qb:ComponentProperty
 #######################################################################
 ####                 ORIGINAL ASK QUERY FROM SPEC  IC-8            ####
 # 

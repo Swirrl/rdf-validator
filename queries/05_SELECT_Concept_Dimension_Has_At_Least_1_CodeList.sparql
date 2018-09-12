@@ -13,10 +13,9 @@ WHERE {
   FILTER NOT EXISTS { ?dim qb:codeList [] }
 }
 
-# IC-5. Concept dimensions have code lists
-# Every dimension with range skos:Concept must have a qb:codeList.
-# Note - Querying for subClassOf skos:Concept within data model
+#! IC-5. Concept dimensions have code lists - Every dimension with range skos:Concept must have a qb:codeList.
 
+# Note - Querying for subClassOf skos:Concept within data model
 #######################################################################
 ####                 ORIGINAL ASK QUERY FROM SPEC  IC-5            ####
 # 

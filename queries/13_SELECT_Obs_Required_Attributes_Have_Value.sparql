@@ -19,9 +19,9 @@ SELECT DISTINCT (?attr AS ?requiredAttributeWithoutValue) ?obs WHERE {
     FILTER NOT EXISTS { ?obs ?attr [] }
 }
 
-# IC-13. Required attributes - Every qb:Observation has a value for each declared attribute that is marked as required.
-# Note - Querying within data model for properties that are types inherited from qb:ComponentProperty
+#! IC-13. Required attributes - Every qb:Observation has a value for each declared attribute that is marked as required.
 
+# Note - Querying within data model for properties that are types inherited from qb:ComponentProperty
 #######################################################################
 ####                 ORIGINAL ASK QUERY FROM SPEC  IC-13           ####
 # 

@@ -1,5 +1,3 @@
-# IC-2. Unique DSD - Every qb:DataSet has exactly one associated qb:DataStructureDefinition. Part (b) datasets with too many associated DSDs
-
 PREFIX rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX skos:    <http://www.w3.org/2004/02/skos/core#>
@@ -17,6 +15,7 @@ WHERE {
   }
 }
 
+#! IC-2. Unique DSD - Every qb:DataSet has exactly one associated qb:DataStructureDefinition. Part (b) datasets with too many associated DSDs
 
 #######################################################################
 ####                ORIGINAL ASK QUERY FROM SPEC  IC-2             ####

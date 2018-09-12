@@ -1,5 +1,3 @@
-#IC-6. Only attributes may be optional - The only components of a qb:DataStructureDefinition that may be marked as optional, using qb:componentRequired are attributes. 
-
 PREFIX rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX skos:    <http://www.w3.org/2004/02/skos/core#>
@@ -14,6 +12,8 @@ WHERE {
                  qb:componentProperty ?component .
   FILTER NOT EXISTS { ?component a qb:AttributeProperty }
 }
+
+#! IC-6. Only attributes may be optional - The only components of a qb:DataStructureDefinition that may be marked as optional, using qb:componentRequired are attributes. 
 
 #######################################################################
 ####                 ORIGINAL ASK QUERY FROM SPEC  IC-6            ####

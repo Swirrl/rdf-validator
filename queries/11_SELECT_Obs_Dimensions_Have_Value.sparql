@@ -12,9 +12,9 @@ WHERE {
     FILTER NOT EXISTS { ?obs ?dim [] }
 }
 
-# IC-11. All dimensions required - Every qb:Observation has a value for each dimension declared in its associated qb:DataStructureDefinition.
-# TODO: (JW) check the sequential path part of the query against some real Swirrl data
+#! IC-11. All dimensions required - Every qb:Observation has a value for each dimension declared in its associated qb:DataStructureDefinition.
 
+# TODO: (JW) check the sequential path part of the query against some real Swirrl data
 #######################################################################
 ####                 ORIGINAL ASK QUERY FROM SPEC  IC-11           ####
 # 
