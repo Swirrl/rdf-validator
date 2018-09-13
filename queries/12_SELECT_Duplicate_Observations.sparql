@@ -34,10 +34,9 @@ WHERE {
         ?obs1 ?dim ?value1 .
         ?obs2 ?dim ?value2 .
         BIND( ?value1 = ?value2 AS ?equal)
-    } GROUP BY ?obs1 ?obs2
+    } ORDER By ?obs1 ?obs2
   }
 }
-GROUP BY ?obs1 ?obs2
 
 #! IC-12. No duplicate observations - No two qb:Observations in the same qb:DataSet may have the same value for all dimensions.
 
