@@ -5,6 +5,8 @@
             [grafter.rdf :as rdf]
             [grafter.rdf.repository :as repo]
             [clojure.string :as string]
+            [rdf-validator.endpoint :as endpoint]
+            [rdf-validator.query :as query]
             [selmer.parser :as selmer]
             [selmer.util :refer [without-escaping set-missing-value-formatter!]]
             [clojure.edn :as edn])
@@ -47,6 +49,8 @@
     (catch URISyntaxException ex
       (file->repository (io/file endpoint-str)))))
 
+(defn- conj-in [m k v]
+  (update-in m [k] conj v))
 (defn parse-variables-file [f]
   (edn/read-string (slurp f)))
 
@@ -57,9 +61,13 @@
     :validate [(fn [f]
                  ;;TODO: check file exists
                  true) "File does not exist"]
-    :assoc-fn (fn [m k v] (update-in m [k] conj v))]
+    :assoc-fn conj-in]
    ["-e" "--endpoint ENDPOINT" "SPARQL data endpoint to validate"
     :parse-fn parse-endpoint]
+   ["-g" "--graph GRAPH" "Graph to include in the RDF dataset"
+    :default []
+    :parse-fn #(URI. %)
+    :assoc-fn conj-in]
    ["-v" "--variables FILE" "EDN file containing query variables"
     :parse-fn parse-variables-file
     :default {}]])
@@ -105,11 +113,12 @@
     (mapcat (fn [cf] (load-test-cases cf query-variables)) (.listFiles f))
     [(load-test-case f query-variables)]))
 
-(defmulti run-test-case (fn [test-case repository] (:type test-case)))
+(defmulti run-test-case (fn [test-case endpoint] (:type test-case)))
 
-(defmethod run-test-case :sparql-ask [{:keys [query-string source-file] :as test-case} repository]
+(defmethod run-test-case :sparql-ask [{:keys [query-string source-file] :as test-case} endpoint]
   (try
-    (let [failed (repo/query repository query-string)]
+    (let [pquery (endpoint/prepare-query endpoint query-string)
+          failed (query/execute pquery)]
       {:source-file source-file
        :result      (if failed :failed :passed)
        :errors      (if failed ["ASK query returned true"] [])})
@@ -118,9 +127,10 @@
        :result :errored
        :errors [(.getMessage ex)]})))
 
-(defmethod run-test-case :sparql-select [{:keys [query-string source-file] :as test-case} repository]
+(defmethod run-test-case :sparql-select [{:keys [query-string source-file] :as test-case} endpoint]
   (try
-    (let [results (vec (repo/query repository query-string))
+    (let [pquery (endpoint/prepare-query endpoint query-string)
+          results (query/execute pquery)
           failed (pos? (count results))]
       {:source-file source-file
        :result      (if failed :failed :passed)
@@ -130,12 +140,12 @@
        :result :errored
        :errors [(.getMessage ex)]})))
 
-(defmethod run-test-case :sparql-ignored [{:keys [source-file]} _repository]
+(defmethod run-test-case :sparql-ignored [{:keys [source-file]} _endpoint]
   {:source-file source-file
    :result :ignored
    :errors []})
 
-(defmethod run-test-case :invalid [{:keys [source-file ^Throwable exception]} _repository]
+(defmethod run-test-case :invalid [{:keys [source-file ^Throwable exception]} _endpoint]
   {:source-file source-file
    :result :errored
    :errors [(.getMessage exception)]})
@@ -147,23 +157,26 @@
   (when (pos? (count errors))
     (println)))
 
-(defn run-test-cases [test-cases repository]
+(defn run-test-cases [test-cases endpoint]
   (reduce (fn [summary [test-index test-case]]
-            (let [{:keys [result] :as test-result} (run-test-case test-case repository)]
+            (let [{:keys [result] :as test-result} (run-test-case test-case endpoint)]
               (display-test-result (assoc test-result :number (inc test-index)))
               (update summary result inc)))
           {:failed 0 :passed 0 :errored 0 :ignored 0}
           (map-indexed vector test-cases)))
+
+(defn- create-endpoint [{:keys [endpoint graph] :as options}]
+  (endpoint/create-endpoint endpoint graph))
 
 (defn -main
   [& args]
   (let [{:keys [errors options] :as result} (cli/parse-opts args cli-options)]
     (if (nil? errors)
       (let [suites (:suite options)
-            repository (:endpoint options)
+            endpoint (create-endpoint options)
             query-variables (:variables options)
             test-cases (mapcat (fn [f] (load-test-cases f query-variables)) suites)
-            {:keys [passed failed errored ignored]} (run-test-cases test-cases repository)]
+            {:keys [passed failed errored ignored]} (run-test-cases test-cases endpoint)]
         (println)
         (println (format "Passed %d Failed %d Errored %d Ignored %d" passed failed errored ignored))
         (System/exit (+ failed errored)))
