@@ -1,4 +1,4 @@
-(defproject swirrl/rdf-validator "0.1.0-SNAPSHOT"
+(defproject swirrl/rdf-validator "0.1.0"
   :description "Tool for validating RDF data"
   :url "https://github.com/Swirrl/rdf-validator"
   :license {:name "Eclipse Public License"
