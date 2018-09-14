@@ -1,6 +1,6 @@
-(defproject rdf-validator "0.1.0-SNAPSHOT"
-  :description "FIXME: write description"
-  :url "http://example.com/FIXME"
+(defproject swirrl/rdf-validator "0.1.0-SNAPSHOT"
+  :description "Tool for validating RDF data"
+  :url "https://github.com/Swirrl/rdf-validator"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :repositories [["apache-releases" {:url "https://repository.apache.org/content/repositories/releases/"}]]
