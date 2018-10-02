@@ -6,6 +6,7 @@
   :repositories [["apache-releases" {:url "https://repository.apache.org/content/repositories/releases/"}]]
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojure/tools.cli "0.3.7"]
+                 [com.stuartsierra/dependency "0.2.0"]
                  [grafter "0.11.5"]
                  [org.apache.jena/apache-jena-libs "3.8.0" :extension "pom"]
                  [selmer "1.12.0"]
@@ -17,4 +18,5 @@
                  [org.apache.logging.log4j/log4j-slf4j-impl "2.11.0"]]
   :main ^:skip-aot rdf-validator.core
   :target-path "target/%s"
-  :profiles {:uberjar {:aot :all}})
+  :profiles {:uberjar {:aot :all}
+             :dev {:resource-paths ["test/resources"]}})

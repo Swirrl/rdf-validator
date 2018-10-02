@@ -1,0 +1,3 @@
+{:extends {:extend [:simple]
+           :exclude [:simple/ask]
+           :tests [#resource "ask_resource.sparql"]}}

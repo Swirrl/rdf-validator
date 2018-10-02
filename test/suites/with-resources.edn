@@ -1,0 +1,2 @@
+{:resources [#resource "ask_resource.sparql"
+             #resource "select_resource.sparql"]}

@@ -1,0 +1,150 @@
+(ns rdf-validator.test-cases-test
+  (:require [clojure.test :refer :all]
+            [rdf-validator.test-cases :refer :all]
+            [clojure.java.io :as io]))
+
+(deftest load-test-suite-query-file
+  (let [f (io/file "test/suites/select.sparql")
+        suite (load-test-suite f)]
+    (is (= {:user {:tests [{:type :sparql
+                            :source f
+                            :suite :user
+                            :name "select"}]}}
+           suite))))
+
+(deftest load-test-suite-query-directory
+  (let [d (io/file "test/suites/queries")
+        suite (load-test-suite d)]
+    (is (= {:queries {:tests [{:type :sparql
+                               :source (io/file d "ask.sparql")
+                               :suite :queries
+                               :name "ask"}
+                              {:type :sparql
+                               :source (io/file d "select.sparql")
+                               :suite :queries
+                               :name "select"}]}}
+           suite))))
+
+(deftest load-test-suite-simple
+  (let [f (io/file "test/suites/simple.edn")
+        suite (load-test-suite f)]
+    (is (= {:simple {:tests [{:type :sparql
+                              :source (io/file "test/suites/queries/ask.sparql")
+                              :suite :simple
+                              :name "ask"}
+                             {:type :sparql
+                              :source (io/file "test/suites/queries/select.sparql")
+                              :suite :simple
+                              :name "select"}]}}
+           suite))))
+
+(deftest load-test-suite-with-resources
+  (let [f (io/file "test/suites/with-resources.edn")
+        suite (load-test-suite f)]
+    (is (= {:resources {:tests [{:type :sparql
+                                 :source (io/resource "ask_resource.sparql")
+                                 :suite :resources
+                                 :name "ask_resource"}
+                                {:type :sparql
+                                 :source (io/resource "select_resource.sparql")
+                                 :suite :resources
+                                 :name "select_resource"}]}}
+           suite))))
+
+(deftest merge-raw-test-suites-test
+  (testing "Disjoint"
+    (let [s1 {:suite1 {:tests [{:type :sparql
+                                :source (io/file "test/suites/queries/ask.sparql")
+                                :suite :suite1
+                                :name "ask"}]}}
+          s2 {:suite2 {:tests [{:type :sparql
+                                :source (io/file "test/suites/queries/select.sparql")
+                                :suite :suite2
+                                :name "select"}]}}]
+      (is (= (merge s1 s2) (merge-raw-test-suites s1 s2)))))
+
+  (testing "Intersecting"
+    (let [t1 {:type :sparql
+              :source (io/file "test/suites/queries/ask.sparql")
+              :suite :suite
+              :name "ask"}
+          t2 {:type :sparql
+              :source (io/file "test/suites/queries/select.sparql")
+              :suite :suite
+              :name "select"}
+          t3 {:type :sparql
+              :source (io/resource "select_resource.sparql")
+              :suite :other
+              :name "select_resource"}
+          s1 {:suite {:tests [t1]}}
+          s2 {:suite {:tests [t2]}
+              :other {:tests [t3]}}]
+      (is (= {:suite {:tests [t1 t2]
+                      :exclude #{}
+                      :extend #{}}
+              :other {:tests [t3]}}
+             (merge-raw-test-suites s1 s2))))))
+
+(deftest resolve-extensions-test
+  (testing "valid"
+    (let [t1 {:type   :sparql
+              :source (io/file "test/suites/queries/ask.sparql")
+              :suite  :suite1
+              :name   "ask"}
+          t2 {:type   :sparql
+              :source (io/file "test/suites/queries/select.sparql")
+              :suite  :suite2
+              :name   "select"}
+          t3 {:type   :sparql
+              :source (io/resource "ask_resource.sparql")
+              :suite  :suite2
+              :name   "ask_resource"}
+          t4 {:type   :sparql
+              :source (io/resource "select_resource.sparql")
+              :suite  :suite4
+              :name   "select_resource"}
+          suites {:suite1 {:tests [t1]}
+                  :suite2 {:tests [t2 t3]}
+                  :suite3 {:extend  [:suite1 :suite2]
+                           :exclude [:suite2/ask_resource]}
+                  :suite4 {:tests  [t4]
+                           :extend [:suite1]}}
+          expected {:suite1 {:tests [t1]}
+                    :suite2 {:tests [t2 t3]}
+                    :suite3 {:tests [t1 t2]}
+                    :suite4 {:tests [t1 t4]}}]
+      (is (= expected (resolve-extensions suites)))))
+
+  (testing "circular depedency"
+    (let [suites {:suite1 {:extend [:suite2]}
+                  :suite2 {:extend [:suite1]}}]
+      (is (thrown? Exception (resolve-extensions suites)))))
+
+  (testing "unknown extension"
+    (let [suites {:suite {:extend [:unknown]
+                          :tests [{:type :sparql
+                                   :source (io/file "test/suites/queries/ask.sparql")
+                                   :suite :suite
+                                   :name "ask"}]}}]
+      (is (thrown? Exception (resolve-extensions suites))))))
+
+(deftest resolve-test-suites-extends
+  (let [suite-files [(io/file "test/suites/simple.edn")
+                     (io/file "test/suites/extends.edn")]
+        expected {:simple {:tests [{:type :sparql
+                                    :source (io/file "test/suites/queries/ask.sparql")
+                                    :suite :simple
+                                    :name "ask"}
+                                   {:type :sparql
+                                    :source (io/file "test/suites/queries/select.sparql")
+                                    :suite :simple
+                                    :name "select"}]}
+                  :extends {:tests [{:type :sparql
+                                     :source (io/file "test/suites/queries/select.sparql")
+                                     :suite :simple
+                                     :name "select"}
+                                    {:type :sparql
+                                     :source (io/resource "ask_resource.sparql")
+                                     :suite :extends
+                                     :name "ask_resource"}]}}]
+    (is (= expected (resolve-test-suites suite-files)))))
