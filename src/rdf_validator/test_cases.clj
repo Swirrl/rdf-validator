@@ -2,75 +2,66 @@
   (:require [clojure.string :as string]
             [clojure.edn :as edn]
             [clojure.java.io :as io]
-            [com.stuartsierra.dependency :as dep])
-  (:import [java.io File]
-           [java.net URL]
-           [java.nio.file Paths]))
+            [com.stuartsierra.dependency :as dep]
+            [rdf-validator.util :as util])
+  (:import [java.io File]))
 
-(defn- split-file-name-extension [^String file-name]
-  (let [ei (.indexOf file-name ".")]
-    (if (= -1 ei)
-      [file-name nil]
-      [(.substring file-name 0 ei) (.substring file-name (inc ei))])))
-
-(defn- split-file-extension [^File f]
-  (split-file-name-extension (.getName f))
-  (let [n (.getName f)
-        ei (.indexOf n ".")]
-    (if (= -1 ei)
-      [n nil]
-      [(.substring n 0 ei) (.substring n (inc ei))])))
-
-(defn get-file-extension [^File f]
-  (second (split-file-extension f)))
-
-(defn- load-file-test [suite ^File f]
-  (let [[n ext] (split-file-extension f)
+(defn- load-source-test [suite source]
+  (let [[n ext] (util/split-file-name-extension (util/get-file-name source))
         type (some-> ext keyword)]
     (if (= :sparql type)
       {:type type
-       :source f
+       :source source
        :name n
        :suite suite})))
 
-(defmulti load-file-test-suite (fn [f] (some-> (get-file-extension f) keyword)))
+(defn- infer-source-test-type [source]
+  (if-let [ext (util/get-file-extension source)]
+    (keyword ext)))
+
+(defn- infer-source-test-name [source]
+  (-> source (util/get-file-name) (util/split-file-name-extension) (first)))
+
+(defmulti load-file-test-suite infer-source-test-type)
 
 (defmethod load-file-test-suite :sparql [f]
   {:user {:tests [{:type :sparql
                    :source f
-                   :name (first (split-file-extension f))
+                   :name (infer-source-test-name f)
                    :suite :user}]}})
 
 (defn- read-edn-suite [f]
   (edn/read-string {:readers {'resource io/resource}} (slurp f)))
 
-(defn- url? [x]
-  (instance? URL x))
+(defn- resolve-test-source [^File suite-file test-source]
+  (cond
+    (string? test-source)
+    (let [suite-dir (.getParentFile suite-file)]
+      (io/file suite-dir test-source))
 
-(defn- resource-url->test [suite-name ^URL url]
-  (let [path (Paths/get (.toURI url))
-        [n ext] (split-file-name-extension (str (.getFileName path)))
-        type (some-> ext keyword)]
-    (if (= :sparql type)
-      {:type type
-       :source url
-       :name n
-       :suite suite-name})))
+    (util/url? test-source)
+    test-source
+
+    :else
+    (throw (ex-info "Test source must be either a string or resource" {:source test-source}))))
 
 (defn- normalise-test [test suite-file suite-name]
   (cond
     (string? test)
-    (let [suite-dir (.getParentFile suite-file)
-          test-file (io/file suite-dir test)]
-      (if-let [test-def (load-file-test suite-name test-file)]
+    (let [test-file (resolve-test-source suite-file test)]
+      (if-let [test-def (load-source-test suite-name test-file)]
         test-def
         (throw (ex-info "Invalid test definition" {:test test :suite suite-name}))))
 
-    (url? test)
-    (resource-url->test suite-name test)
+    (util/url? test)
+    (load-source-test suite-name test)
 
     (map? test)
-    (throw (ex-info "implement" {}))
+    (let [test-source (resolve-test-source suite-file (:source test))]
+      {:type (or (:type test) (infer-source-test-type test-source))
+       :source test-source
+       :name (or (:name test) (infer-source-test-name test-source))
+       :suite suite-name})
 
     :else
     (throw (ex-info "Test definition must be either a string or a map" {:suite suite-name}))))
@@ -99,7 +90,7 @@
         search (fn search [^File f]
                  (if (.isDirectory f)
                    (mapcat search (.listFiles f))
-                   [(load-file-test suite f)]))
+                   [(load-source-test suite f)]))
         tests (vec (remove nil? (search dir)))]
     {suite {:tests tests}}))
 

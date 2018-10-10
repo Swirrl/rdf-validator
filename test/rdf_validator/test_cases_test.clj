@@ -51,6 +51,23 @@
                                  :name "select_resource"}]}}
            suite))))
 
+(deftest load-test-suite-explicit
+  (let [f (io/file "test/suites/explicit-tests.edn")
+        suite (load-test-suite f)]
+    (is (= {:explicit {:tests [{:type :sparql
+                                :source (io/file "test/suites/queries/ask.sparql")
+                                :name "ask"
+                                :suite :explicit}
+                               {:type :other
+                                :source (io/file "test/suites/queries/select.sparql")
+                                :name "select"
+                                :suite :explicit}
+                               {:type :sparql
+                                :source (io/resource "ask_resource.sparql")
+                                :name "embedded"
+                                :suite :explicit}]}}
+           suite))))
+
 (deftest merge-raw-test-suites-test
   (testing "Disjoint"
     (let [s1 {:suite1 {:tests [{:type :sparql
