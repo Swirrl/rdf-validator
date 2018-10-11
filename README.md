@@ -55,7 +55,80 @@ This is consistent with the queries defined in the RDF data cube specification.
 
 ### SELECT queries
 
-SPARQL SELECT queries are considered to have failed if they return any matching solutions. Like ASK queries they should return bindings describing invalid resources. 
+SPARQL SELECT queries are considered to have failed if they return any matching solutions. Like ASK queries they should return bindings describing invalid resources.
+
+## Defining test suites
+
+A test suite defines a group of tests to be run. A test suite can be created from a single test file or a directory containing test files as shown in the
+examples above. A test suite can also be defined within an EDN file that lists the tests it contains. The minimal form of this EDN file is:
+
+```clojure
+{
+  :suite-name ["test1.sparql"
+               "dir/test2.sparql"]
+  :suite2     ["suite2/test3.sparql"]
+}
+```
+
+Each key in the top-level map defines a test suite and the corresponding value contains the suite definition. Each test definition in the associated
+list should be a path to a test file relative to the suite definition file. The type and name of each test is derived from the test file name. These
+can be stated explicitly by defining tests within a map:
+
+```clojure
+{
+  :suite-name [{:source "test1.sparql"
+                :type :sparql
+                :name "first"}
+               {:source "test2.sparql"
+                :name "second"}
+               {:source "test3.sparql"}
+               "dir/test4.sparql"]
+}
+```
+
+When defining test definitions explicitly, only the `:source` key is required, the type and name will be derived from the test file name if not
+provided. The two styles of defining tests can be combined within a test suite definition as defined above.
+
+### Combining test suites
+
+Test suites can selectively include test cases from other test suites:
+
+```clojure
+{
+  :suite1 ["test1.sparql"
+           "test2.sparql"]
+  :suite2 ["test3.sparql"]
+  :suite3 {:extend [:suite1 :suite2]
+           :exclude [:suite1/test1]
+           :tests [{:source "test4.txt"
+                    :type :sparql}]}
+}
+```
+
+Test suites can extend any number of other suites - this includes each test from the referenced suite into the extending suite. Any tests defined 
+in the imported suites can be selectively excluded by referencing them in the `:exclude` list. Each entry should contain a keyword of the form
+`:suite-name/test-name`. By default test names are the stem of the file name up to the file extension e.g. the test for file `"test1.sparql"`
+will be named `"test"`.
+
+Test suite extensions must be acyclic e.g. `:suite1` extending `:suite2` which in turn extends `:suite1` would be an error.
+An error will be raised if any suite listed within an extension list is not defined, but suites do not need to be defined within the
+same suite file. For example given two test files:
+
+#### suite1.edn
+```clojure
+{:suite1 ["test1.sparql"]}
+```
+
+#### suite2.edn
+```clojure
+{:suite2 {:extend [:suite1]
+          :tests ["test2.sparql"]}}
+```
+
+this is valid as long as `suite1.edn` is provided as a suite whenever `suite2.edn` is required e.g.
+
+    java -jar rdf-validator-standalone.jar --endpoint data.ttl --suite suite1.edn --suite suite2.edn
+
 
 ## License
 
