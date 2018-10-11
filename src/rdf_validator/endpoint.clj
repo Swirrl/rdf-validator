@@ -1,25 +1,26 @@
 (ns rdf-validator.endpoint
   (:require [grafter.rdf.repository :as repo]
             [grafter.rdf :as rdf]
-            [clojure.java.io :as io])
+            [clojure.java.io :as io]
+            [clojure.tools.logging :as log])
   (:import [java.net URISyntaxException URI]
            [java.io File]))
 
 (defn file->repository [^File f]
   (if (.isDirectory f)
     (let [r (repo/sail-repo)]
-      (println "Creating repository from directory: " (.getAbsolutePath f))
+      (log/info "Creating repository from directory: " (.getAbsolutePath f))
       (doseq [df (.listFiles f)]
         (rdf/add r (rdf/statements df)))
       r)
     (do
-      (println "Creating repository from file: " (.getAbsolutePath f))
+      (log/info "Creating repository from file: " (.getAbsolutePath f))
       (repo/fixture-repo f))))
 
 (defmulti uri->repository (fn [^URI uri] (some-> (.getScheme uri) keyword)))
 
 (defn- create-sparql-repo [uri]
-  (println "Creating SPARQL repository: " (str uri))
+  (log/info "Creating SPARQL repository: " (str uri))
   (repo/sparql-repo (str uri)))
 
 (defmethod uri->repository :http [uri]

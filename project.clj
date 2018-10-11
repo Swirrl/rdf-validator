@@ -6,6 +6,7 @@
   :repositories [["apache-releases" {:url "https://repository.apache.org/content/repositories/releases/"}]]
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojure/tools.cli "0.3.7"]
+                 [org.clojure/tools.logging "0.4.1"]
                  [com.stuartsierra/dependency "0.2.0"]
                  [grafter "0.11.5"]
                  [org.apache.jena/apache-jena-libs "3.8.0" :extension "pom"]
