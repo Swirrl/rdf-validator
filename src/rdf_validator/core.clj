@@ -112,13 +112,18 @@
   [& args]
   (let [{:keys [errors options] :as result} (cli/parse-opts args cli-options)]
     (if (nil? errors)
-      (let [suite-files (:suite options)
-            endpoint (create-endpoint options)
-            query-variables (:variables options)
-            suites (tc/resolve-test-suites suite-files)
-            test-cases (tc/suite-tests suites)
-            test-reporter (reporting/->ConsoleTestReporter)
-            {:keys [failed errored] :as test-summary} (run-test-cases test-cases query-variables endpoint test-reporter)]
-        (System/exit (+ failed errored)))
+      (try
+        (let [suite-files (:suite options)
+              endpoint (create-endpoint options)
+              query-variables (:variables options)
+              suites (tc/resolve-test-suites suite-files)
+              test-cases (tc/suite-tests suites)
+              test-reporter (reporting/->ConsoleTestReporter)
+              {:keys [failed errored] :as test-summary} (run-test-cases test-cases query-variables endpoint test-reporter)]
+          (System/exit (+ failed errored)))
+        (catch Exception ex
+          (binding [*out* *err*]
+            (println (.getMessage ex))
+            (System/exit 1))))
       (do (invalid-args result)
           (System/exit 1)))))
