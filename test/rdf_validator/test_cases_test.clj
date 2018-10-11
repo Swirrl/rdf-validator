@@ -130,12 +130,12 @@
                     :suite2 {:tests [t2 t3]}
                     :suite3 {:tests [t1 t2]}
                     :suite4 {:tests [t1 t4]}}]
-      (is (= expected (resolve-extensions suites)))))
+      (is (= expected (resolve-imports suites)))))
 
   (testing "circular depedency"
     (let [suites {:suite1 {:extend [:suite2]}
                   :suite2 {:extend [:suite1]}}]
-      (is (thrown? Exception (resolve-extensions suites)))))
+      (is (thrown? Exception (resolve-imports suites)))))
 
   (testing "unknown extension"
     (let [suites {:suite {:extend [:unknown]
@@ -143,7 +143,7 @@
                                    :source (io/file "test/suites/queries/ask.sparql")
                                    :suite :suite
                                    :name "ask"}]}}]
-      (is (thrown? Exception (resolve-extensions suites))))))
+      (is (thrown? Exception (resolve-imports suites))))))
 
 (deftest resolve-test-suites-extends
   (let [suite-files [(io/file "test/suites/simple.edn")

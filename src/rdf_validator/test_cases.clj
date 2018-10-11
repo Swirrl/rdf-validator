@@ -6,20 +6,25 @@
             [rdf-validator.util :as util])
   (:import [java.io File]))
 
-(defn- load-source-test [suite source]
+(defn- load-source-test [suite-name source]
   (let [[n ext] (util/split-file-name-extension (util/get-file-name source))
         type (some-> ext keyword)]
     (if (= :sparql type)
       {:type type
        :source source
        :name n
-       :suite suite})))
+       :suite suite-name})))
 
-(defn- infer-source-test-type [source]
+(defn- infer-source-test-type
+  "Returns a keyword representing the inferred test type for a given test source, or nil if
+   no type could be inferred."
+  [source]
   (if-let [ext (util/get-file-extension source)]
     (keyword ext)))
 
-(defn- infer-source-test-name [source]
+(defn- infer-source-test-name
+  "Derives the name of a test from the source."
+  [source]
   (-> source (util/get-file-name) (util/split-file-name-extension) (first)))
 
 (defmulti load-file-test-suite infer-source-test-type)
@@ -30,10 +35,21 @@
                    :name (infer-source-test-name f)
                    :suite :user}]}})
 
-(defn- read-edn-suite [f]
-  (edn/read-string {:readers {'resource io/resource}} (slurp f)))
+(defn- resolve-test-resource
+  "Resolves a test resource by name. Throws an exception if the resource does not exist."
+  [resource-name]
+  (if-let [resource (io/resource resource-name)]
+    resource
+    (throw (ex-info (format "Invalid test resource: %s" resource-name) {:resource-name resource-name}))))
 
-(defn- resolve-test-source [^File suite-file test-source]
+(defn- read-edn-suite
+  "Reads a raw test suite definition from an EDN source."
+  [f]
+  (edn/read-string {:readers {'resource resolve-test-resource}} (slurp f)))
+
+(defn- resolve-test-source
+  "Resolves a test definition into an absolute data source."
+  [^File suite-file test-source]
   (cond
     (string? test-source)
     (let [suite-dir (.getParentFile suite-file)]
@@ -45,13 +61,12 @@
     :else
     (throw (ex-info "Test source must be either a string or resource" {:source test-source}))))
 
-(defn- normalise-test [test suite-file suite-name]
+(defn- normalise-test
+  "Normalises a test definition into a map."
+  [test suite-file suite-name]
   (cond
     (string? test)
-    (let [test-file (resolve-test-source suite-file test)]
-      (if-let [test-def (load-source-test suite-name test-file)]
-        test-def
-        (throw (ex-info "Invalid test definition" {:test test :suite suite-name}))))
+    (recur {:source test} suite-file suite-name)
 
     (util/url? test)
     (load-source-test suite-name test)
@@ -66,7 +81,9 @@
     :else
     (throw (ex-info "Test definition must be either a string or a map" {:suite suite-name}))))
 
-(defn- normalise-suite [source-file suite-name suite]
+(defn- normalise-suite
+  "Normalises a raw test suite definition."
+  [source-file suite-name suite]
   (cond
     (vector? suite) (recur source-file suite-name {:tests suite})
     (map? suite) (update suite :tests #(mapv (fn [t] (normalise-test t source-file suite-name)) %))
@@ -83,7 +100,9 @@
 (defmethod load-file-test-suite :default [f]
   nil)
 
-(defn- load-directory-test-suite [^File dir]
+(defn- load-directory-test-suite
+  "Recursively loads all tests contained within the given directory."
+  [^File dir]
   (let [suite (-> (.getName dir)
                   (string/lower-case)
                   (keyword))
@@ -94,18 +113,28 @@
         tests (vec (remove nil? (search dir)))]
     {suite {:tests tests}}))
 
-(defn load-test-suite [^File file-or-dir]
+(defn load-test-suite
+  "Loads a test suite definition map from a given file. If a file is passed it is considered to contain
+   a single test of a type inferred from the file extension. If a directory is given the suite is constructed
+   from the suites represented by each contained file. If a test type cannot be inferred for a contained file
+   it is ignored and not included in the resulting suite."
+  [^File file-or-dir]
   (if (.isDirectory file-or-dir)
     (load-directory-test-suite file-or-dir)
     (load-file-test-suite file-or-dir)))
 
-(defn- merge-suite [{tests1 :tests extend1 :extend exclude1 :exclude} {tests2 :tests extend2 :extend exclude2 :exclude}]
+(defn- merge-raw-suite
+  "Merges two raw test suite definition maps."
+  [{tests1 :tests extend1 :extend exclude1 :exclude} {tests2 :tests extend2 :extend exclude2 :exclude}]
   {:tests (vec (concat tests1 tests2))
    :extend (set (concat extend1 extend2))
    :exclude (set (concat exclude1 exclude2))})
 
-(defn merge-raw-test-suites [s1 s2]
-  (merge-with merge-suite s1 s2))
+(defn merge-raw-test-suites
+  "Merges two raw test suite maps into a single map. Suites with the same name are merged into a
+   single definition within the result map."
+  [s1 s2]
+  (merge-with merge-raw-suite s1 s2))
 
 (defn- build-dependency-graph [raw-suite]
   (let [suite-names (set (keys raw-suite))
@@ -120,7 +149,11 @@
             (dep/graph)
             deps)))
 
-(defn- get-resolution-order [raw-suites]
+(defn- get-resolution-order
+  "Returns an ordered list of test suite names specifying the order in which their tests should be resolved. Suites
+   should be resolved after any test suites they extend. An exception will be thrown if any suites extend each other
+   cyclically."
+  [raw-suites]
   (let [dep-graph (build-dependency-graph raw-suites)
         dep-suites (dep/nodes dep-graph)
         independent-suites (remove (fn [s] (contains? dep-suites s)) (keys raw-suites))]
@@ -129,7 +162,11 @@
 (defn- test-key [{suite :suite test-name :name}]
   (keyword (name suite) test-name))
 
-(defn- resolve-suite [{:keys [tests extend exclude] :as raw-suite} resolved-suites]
+(defn- resolve-suite
+  "Resolves the tests to be included within a test suite. Any suites imported by the current suite should
+   already have been resolved and included within resolved-suites. Imports all the tests from any extended
+   suites and removes any tests specified by the :exclude key."
+  [{:keys [tests extend exclude] :as raw-suite} resolved-suites]
   (let [excluded-set (set exclude)                          ;;TODO: is this required?
         included (mapcat (fn [included-suite-name]
                            (let [included-tests (get-in resolved-suites [included-suite-name :tests])]
@@ -137,7 +174,10 @@
                          extend)]
     {:tests (vec (concat included tests))}))
 
-(defn- resolve-suite-extensions [raw-suites resolution-order]
+(defn- resolve-suite-imports
+  "Resolves imports for a map of test suite definitions in the order specified by resolution-order. An exception is
+   thrown if any referenced test suite is not defined."
+  [raw-suites resolution-order]
   (reduce (fn [acc suite-name]
             (let [raw-suite (get raw-suites suite-name ::missing)]
               (if (= ::missing raw-suite)
@@ -147,17 +187,23 @@
           {}
           resolution-order))
 
-(defn resolve-extensions [raw-suite]
+(defn resolve-imports
+  "Resolves test suite extensions within a map of test suite definitions. Each referenced suite must exist
+   within raw-suite."
+  [raw-suite]
   (let [resolution-order (get-resolution-order raw-suite)]
-    (resolve-suite-extensions raw-suite resolution-order)))
+    (resolve-suite-imports raw-suite resolution-order)))
 
-(defn resolve-test-suites [test-suite-files]
+(defn resolve-test-suites
+  "Loads a sequence of test suite files, resolves any declared imports and merges the resulting suite maps
+   into a single suite map."
+  [test-suite-files]
   (let [raw (reduce (fn [acc suite-file]
                       (let [suite (load-test-suite suite-file)]
                         (merge-raw-test-suites acc suite)))
                     nil
                     test-suite-files)]
-    (resolve-extensions raw)))
+    (resolve-imports raw)))
 
 (defn suite-tests [suite]
   (mapcat :tests (vals suite)))
