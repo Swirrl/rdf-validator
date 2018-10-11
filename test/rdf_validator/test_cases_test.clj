@@ -98,7 +98,7 @@
               :other {:tests [t3]}}]
       (is (= {:suite {:tests [t1 t2]
                       :exclude #{}
-                      :extend #{}}
+                      :import #{}}
               :other {:tests [t3]}}
              (merge-raw-test-suites s1 s2))))))
 
@@ -122,10 +122,10 @@
               :name   "select_resource"}
           suites {:suite1 {:tests [t1]}
                   :suite2 {:tests [t2 t3]}
-                  :suite3 {:extend  [:suite1 :suite2]
+                  :suite3 {:import  [:suite1 :suite2]
                            :exclude [:suite2/ask_resource]}
                   :suite4 {:tests  [t4]
-                           :extend [:suite1]}}
+                           :import [:suite1]}}
           expected {:suite1 {:tests [t1]}
                     :suite2 {:tests [t2 t3]}
                     :suite3 {:tests [t1 t2]}
@@ -133,21 +133,21 @@
       (is (= expected (resolve-imports suites)))))
 
   (testing "circular depedency"
-    (let [suites {:suite1 {:extend [:suite2]}
-                  :suite2 {:extend [:suite1]}}]
+    (let [suites {:suite1 {:import [:suite2]}
+                  :suite2 {:import [:suite1]}}]
       (is (thrown? Exception (resolve-imports suites)))))
 
   (testing "unknown extension"
-    (let [suites {:suite {:extend [:unknown]
+    (let [suites {:suite {:import [:unknown]
                           :tests [{:type :sparql
                                    :source (io/file "test/suites/queries/ask.sparql")
                                    :suite :suite
                                    :name "ask"}]}}]
       (is (thrown? Exception (resolve-imports suites))))))
 
-(deftest resolve-test-suites-extends
+(deftest resolve-test-suites-imports
   (let [suite-files [(io/file "test/suites/simple.edn")
-                     (io/file "test/suites/extends.edn")]
+                     (io/file "test/suites/imports.edn")]
         expected {:simple {:tests [{:type :sparql
                                     :source (io/file "test/suites/queries/ask.sparql")
                                     :suite :simple
@@ -156,12 +156,12 @@
                                     :source (io/file "test/suites/queries/select.sparql")
                                     :suite :simple
                                     :name "select"}]}
-                  :extends {:tests [{:type :sparql
+                  :imports {:tests [{:type :sparql
                                      :source (io/file "test/suites/queries/select.sparql")
                                      :suite :simple
                                      :name "select"}
                                     {:type :sparql
                                      :source (io/resource "ask_resource.sparql")
-                                     :suite :extends
+                                     :suite :imports
                                      :name "ask_resource"}]}}]
     (is (= expected (resolve-test-suites suite-files)))))

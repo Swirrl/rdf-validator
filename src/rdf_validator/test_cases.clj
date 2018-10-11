@@ -125,9 +125,9 @@
 
 (defn- merge-raw-suite
   "Merges two raw test suite definition maps."
-  [{tests1 :tests extend1 :extend exclude1 :exclude} {tests2 :tests extend2 :extend exclude2 :exclude}]
+  [{tests1 :tests import1 :import exclude1 :exclude} {tests2 :tests import2 :import exclude2 :exclude}]
   {:tests (vec (concat tests1 tests2))
-   :extend (set (concat extend1 extend2))
+   :import (set (concat import1 import2))
    :exclude (set (concat exclude1 exclude2))})
 
 (defn merge-raw-test-suites
@@ -138,20 +138,20 @@
 
 (defn- build-dependency-graph [raw-suite]
   (let [suite-names (set (keys raw-suite))
-        deps (mapcat (fn [[suite-name {:keys [extend] :as suite}]]
-                       (map (fn [s] [suite-name s]) extend))
+        deps (mapcat (fn [[suite-name {:keys [import] :as suite}]]
+                       (map (fn [s] [suite-name s]) import))
                      raw-suite)]
     (reduce (fn [g [suite dep]]
               (if (contains? suite-names dep)
                 (dep/depend g suite dep)
-                (throw (ex-info (format "Unknown suite %s extended by suite %s" (name dep) (name suite))
+                (throw (ex-info (format "Unknown suite %s imported by suite %s" (name dep) (name suite))
                                 {:suite suite :dependency dep}))))
             (dep/graph)
             deps)))
 
 (defn- get-resolution-order
   "Returns an ordered list of test suite names specifying the order in which their tests should be resolved. Suites
-   should be resolved after any test suites they extend. An exception will be thrown if any suites extend each other
+   should be resolved after any test suites they import. An exception will be thrown if any suites import each other
    cyclically."
   [raw-suites]
   (let [dep-graph (build-dependency-graph raw-suites)
@@ -164,14 +164,14 @@
 
 (defn- resolve-suite
   "Resolves the tests to be included within a test suite. Any suites imported by the current suite should
-   already have been resolved and included within resolved-suites. Imports all the tests from any extended
+   already have been resolved and included within resolved-suites. Imports all the tests from any imported
    suites and removes any tests specified by the :exclude key."
-  [{:keys [tests extend exclude] :as raw-suite} resolved-suites]
+  [{:keys [tests import exclude] :as raw-suite} resolved-suites]
   (let [excluded-set (set exclude)                          ;;TODO: is this required?
         included (mapcat (fn [included-suite-name]
                            (let [included-tests (get-in resolved-suites [included-suite-name :tests])]
                              (remove (fn [test] (contains? excluded-set (test-key test))) included-tests)))
-                         extend)]
+                         import)]
     {:tests (vec (concat included tests))}))
 
 (defn- resolve-suite-imports

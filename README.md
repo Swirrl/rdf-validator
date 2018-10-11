@@ -98,19 +98,19 @@ Test suites can selectively include test cases from other test suites:
   :suite1 ["test1.sparql"
            "test2.sparql"]
   :suite2 ["test3.sparql"]
-  :suite3 {:extend [:suite1 :suite2]
+  :suite3 {:import [:suite1 :suite2]
            :exclude [:suite1/test1]
            :tests [{:source "test4.txt"
                     :type :sparql}]}
 }
 ```
 
-Test suites can extend any number of other suites - this includes each test from the referenced suite into the extending suite. Any tests defined 
+Test suites can import any number of other suites - this includes each test from the referenced suite into the importing suite. Any tests defined 
 in the imported suites can be selectively excluded by referencing them in the `:exclude` list. Each entry should contain a keyword of the form
 `:suite-name/test-name`. By default test names are the stem of the file name up to the file extension e.g. the test for file `"test1.sparql"`
 will be named `"test"`.
 
-Test suite extensions must be acyclic e.g. `:suite1` extending `:suite2` which in turn extends `:suite1` would be an error.
+Test suite extensions must be acyclic e.g. `:suite1` importing `:suite2` which in turn imports `:suite1` is an error.
 An error will be raised if any suite listed within an extension list is not defined, but suites do not need to be defined within the
 same suite file. For example given two test files:
 
@@ -121,7 +121,7 @@ same suite file. For example given two test files:
 
 #### suite2.edn
 ```clojure
-{:suite2 {:extend [:suite1]
+{:suite2 {:import [:suite1]
           :tests ["test2.sparql"]}}
 ```
 
