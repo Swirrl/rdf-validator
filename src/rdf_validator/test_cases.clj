@@ -205,5 +205,13 @@
                     test-suite-files)]
     (resolve-imports raw)))
 
-(defn suite-tests [suite]
-  (mapcat :tests (vals suite)))
+(defn suite-tests
+  "Given a test suite map and a collection of test suite names to run, returns a sequence of test cases to be executed.
+   If no suite names are specified, all tests for all suites are returned."
+  [suites to-run-names]
+  (let [get-suite (fn [suite-name]
+                    (get suites (keyword suite-name)))
+        suites-to-run (if (seq to-run-names)
+                        (map get-suite to-run-names)
+                        (vals suites))]
+    (mapcat :tests suites-to-run)))

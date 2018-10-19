@@ -117,7 +117,8 @@
               endpoint (create-endpoint options)
               query-variables (:variables options)
               suites (tc/resolve-test-suites suite-files)
-              test-cases (tc/suite-tests suites)
+              suites-to-run (:arguments result)
+              test-cases (tc/suite-tests suites suites-to-run)
               test-reporter (reporting/->ConsoleTestReporter)
               {:keys [failed errored] :as test-summary} (run-test-cases test-cases query-variables endpoint test-reporter)]
           (System/exit (+ failed errored)))

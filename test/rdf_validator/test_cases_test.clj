@@ -165,3 +165,20 @@
                                      :suite :imports
                                      :name "ask_resource"}]}}]
     (is (= expected (resolve-test-suites suite-files)))))
+
+(deftest suite-tests-test
+  (let [test1 {:name "test1"}
+        test2 {:name "test2"}
+        test3 {:name "test3"}
+        test4 {:name "test4"}
+        suites {:suite1 {:tests [test1 test2]}
+                :suite2 {:tests [test3]}
+                :suite3 {:tests [test4]}}]
+    (testing "specified suites"
+      (let [to-run-names ["suite1" "suite3" "missing"]
+            to-run (suite-tests suites to-run-names)]
+        (is (= #{test1 test2 test4} (set to-run)))))
+
+    (testing "all suites"
+      (is (= #{test1 test2 test3 test4}
+             (set (suite-tests suites [])))))))

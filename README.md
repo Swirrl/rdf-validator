@@ -129,6 +129,27 @@ this is valid as long as `suite1.edn` is provided as a suite whenever `suite2.ed
 
     java -jar rdf-validator-standalone.jar --endpoint data.ttl --suite suite1.edn --suite suite2.edn
 
+### Running individual suites
+
+By default all test cases within all test suites will be executed when running `rdf-validator`.
+This may be undesirable if many test suites are defined, or if one suite imports from another since
+this will cause imported test cases to be executed multiple times.
+
+Individual test suites can be executed by providing the suite names to be run in an argument list
+to the command-line invocation e.g.
+
+#### tests.edn
+```clojure
+{:suite1 ["test1.sparql" "test2.sparql" "test3.sparql"]
+ :suite2 {:import [:suite1]
+          :exclude [:suite1/test2]
+          :tests ["test4.sparql"]
+ :suite3 ["test5.sparql"]}
+```
+
+    java -jar rdf-validator-standalone.jar --endpoint data.ttl --suite tests.edn suite2 suite3
+    
+This will execute the tests defined within `suite2` and `suite3` within `tests.edn`.
 
 ## License
 
