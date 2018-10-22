@@ -6,7 +6,10 @@
             [rdf-validator.util :as util])
   (:import [java.io File]))
 
-(defn- load-source-test [suite-name source]
+(defn- load-source-test
+  "Loads a test definition from the specified data source. Infers the test type and name from the name of
+   the source."
+  [suite-name source]
   (let [[n ext] (util/split-file-name-extension (util/get-file-name source))
         type (some-> ext keyword)]
     (if (= :sparql type)
@@ -47,13 +50,18 @@
   [f]
   (edn/read-string {:readers {'resource resolve-test-resource}} (slurp f)))
 
+(defn- ^File resolve-test-file
+  "Resolves a test source path against the parent test suite file."
+  [^File suite-file test-source]
+  (let [suite-dir (.getParentFile suite-file)]
+    (io/file suite-dir test-source)))
+
 (defn- resolve-test-source
   "Resolves a test definition into an absolute data source."
   [^File suite-file test-source]
   (cond
     (string? test-source)
-    (let [suite-dir (.getParentFile suite-file)]
-      (io/file suite-dir test-source))
+    (resolve-test-file suite-file test-source)
 
     (util/url? test-source)
     test-source
@@ -61,22 +69,46 @@
     :else
     (throw (ex-info "Test source must be either a string or resource" {:source test-source}))))
 
-(defn- normalise-test
-  "Normalises a test definition into a map."
-  [test suite-file suite-name]
+(defn- load-directory-tests
+  "Loads all tests defined within the specified directory."
+  [suite-name ^File dir]
+  (let [search (fn search [^File f]
+                 (if (.isDirectory f)
+                   (mapcat search (.listFiles f))
+                   [(load-source-test suite-name f)]))]
+    (vec (remove nil? (search dir)))))
+
+(defn- load-directory-test-suite
+  "Recursively loads all tests contained within the given directory."
+  [^File dir]
+  (let [suite-name (-> (.getName dir)
+                       (string/lower-case)
+                       (keyword))
+        tests (load-directory-tests suite-name dir)]
+    {suite-name {:tests tests}}))
+
+(defn- normalise-tests
+  "Loads normalised test definitions from a test source referenced within an EDN test suite file.
+   The source may resolve to multiple contained test definitions."
+  [suite-file suite-name test]
   (cond
     (string? test)
-    (recur {:source test} suite-file suite-name)
+    (let [test-file (resolve-test-file suite-file test)]
+      (if (.isDirectory test-file)
+        (load-directory-tests suite-name test-file)
+        (if-let [t (load-source-test suite-name test-file)]
+          [t])))
 
     (util/url? test)
-    (load-source-test suite-name test)
+    (if-let [t (load-source-test suite-name test)]
+      [t])
 
     (map? test)
     (let [test-source (resolve-test-source suite-file (:source test))]
-      {:type (or (:type test) (infer-source-test-type test-source))
-       :source test-source
-       :name (or (:name test) (infer-source-test-name test-source))
-       :suite suite-name})
+      [{:type   (or (:type test) (infer-source-test-type test-source))
+        :source test-source
+        :name   (or (:name test) (infer-source-test-name test-source))
+        :suite  suite-name}])
 
     :else
     (throw (ex-info "Test definition must be either a string or a map" {:suite suite-name}))))
@@ -86,7 +118,7 @@
   [source-file suite-name suite]
   (cond
     (vector? suite) (recur source-file suite-name {:tests suite})
-    (map? suite) (update suite :tests #(mapv (fn [t] (normalise-test t source-file suite-name)) %))
+    (map? suite) (update suite :tests #(vec (mapcat (fn [t] (normalise-tests source-file suite-name t)) %)))
     :else (throw (ex-info "Suite definition must be a vector or a map" {:suite suite}))))
 
 (defmethod load-file-test-suite :edn [f]
@@ -99,19 +131,6 @@
 
 (defmethod load-file-test-suite :default [f]
   nil)
-
-(defn- load-directory-test-suite
-  "Recursively loads all tests contained within the given directory."
-  [^File dir]
-  (let [suite (-> (.getName dir)
-                  (string/lower-case)
-                  (keyword))
-        search (fn search [^File f]
-                 (if (.isDirectory f)
-                   (mapcat search (.listFiles f))
-                   [(load-source-test suite f)]))
-        tests (vec (remove nil? (search dir)))]
-    {suite {:tests tests}}))
 
 (defn load-test-suite
   "Loads a test suite definition map from a given file. If a file is passed it is considered to contain

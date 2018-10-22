@@ -38,6 +38,19 @@
                               :name "select"}]}}
            suite))))
 
+(deftest load-test-suite-referencing-directory
+  (let [f (io/file "test/suites/dir.edn")
+        suite (load-test-suite f)]
+    (is (= {:dir {:tests [{:type :sparql
+                           :source (io/file "test/suites/queries/ask.sparql")
+                           :suite :dir
+                           :name "ask"}
+                          {:type :sparql
+                           :source (io/file "test/suites/queries/select.sparql")
+                           :suite :dir
+                           :name "select"}]}}
+           suite))))
+
 (deftest load-test-suite-with-resources
   (let [f (io/file "test/suites/with-resources.edn")
         suite (load-test-suite f)]
