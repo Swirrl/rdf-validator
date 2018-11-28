@@ -1,5 +1,5 @@
 language: clojure
-lein: 2.7.1
+lein: 2.8.1
 
 before_install:
   - sudo apt-get install -y curl rlwrap
