@@ -13,7 +13,7 @@
     "Returns the java.nio.file.Path associated with this instance."))
 
 (defn get-file-name
-  "Returns the "
+  "Returns the file name for the contained path"
   [has-path]
   (str (.getFileName (get-path has-path))))
 
@@ -51,3 +51,10 @@
    the last . character."
   [source]
   (second (split-file-extension source)))
+
+(defn resources
+  "Returns a sequence of URLs for resources with the specified name"
+  ([resource-name]
+    (resources resource-name (.getContextClassLoader (Thread/currentThread))))
+  ([resource-name ^ClassLoader loader]
+    (enumeration-seq (.getResources loader resource-name))))

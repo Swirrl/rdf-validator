@@ -1,7 +1,7 @@
 (ns rdf-validator.reporting
   "Used for creating reports of test executions."
-  (:require [clojure.string :as string])
-  (:import [java.io File]))
+  (:require [clojure.string :as string]
+            [rdf-validator.util :as util]))
 
 (defprotocol TestReporter
   (report-test-result! [this test-result]
@@ -11,8 +11,8 @@
 
 (defrecord ConsoleTestReporter []
   TestReporter
-  (report-test-result! [_this {:keys [number ^File source-file result errors] :as test-result}]
-    (println (format "%d %s: %s" number (.getAbsolutePath source-file) (string/upper-case (name result))))
+  (report-test-result! [_this {:keys [number test-source result errors] :as test-result}]
+    (println (format "%d %s: %s" number (util/get-path test-source) (string/upper-case (name result))))
     (doseq [error errors]
       (println (format "\t%s" error)))
     (when (pos? (count errors))

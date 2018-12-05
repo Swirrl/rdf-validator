@@ -1,5 +1,3 @@
 {:explicit [{:source "queries/ask.sparql"}
             {:type :other
-             :source "queries/select.sparql"}
-            {:source #resource "ask_resource.sparql"
-             :name "embedded"}]}
+             :source "queries/select.sparql"}]}

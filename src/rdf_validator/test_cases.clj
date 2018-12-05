@@ -4,7 +4,28 @@
             [clojure.java.io :as io]
             [com.stuartsierra.dependency :as dep]
             [rdf-validator.util :as util])
-  (:import [java.io File]))
+  (:import [java.io File]
+           [java.net URL URI]))
+
+(defprotocol Relatable
+  (resolve-relative [this ^String relative]
+    "Resolves the location of an item relative to this"))
+
+(extend-protocol Relatable
+  File
+  (resolve-relative [^File f relative]
+    (if (.isDirectory f)
+      (io/file f relative)
+      (io/file (.getParentFile f) relative)))
+
+  URI
+  (resolve-relative [^URI uri ^String relative]
+    (.resolve uri relative))
+
+  URL
+  (resolve-relative [^URL url ^String relative]
+    (let [^URI uri (resolve-relative (.toURI url) relative)]
+      (.toURL uri))))
 
 (defn- load-source-test
   "Loads a test definition from the specified data source. Infers the test type and name from the name of
@@ -30,44 +51,18 @@
   [source]
   (-> source (util/get-file-name) (util/split-file-name-extension) (first)))
 
-(defmulti load-file-test-suite infer-source-test-type)
+(defmulti load-source-test-suite infer-source-test-type)
 
-(defmethod load-file-test-suite :sparql [f]
+(defmethod load-source-test-suite :sparql [source]
   {:user {:tests [{:type :sparql
-                   :source f
-                   :name (infer-source-test-name f)
+                   :source source
+                   :name (infer-source-test-name source)
                    :suite :user}]}})
-
-(defn- resolve-test-resource
-  "Resolves a test resource by name. Throws an exception if the resource does not exist."
-  [resource-name]
-  (if-let [resource (io/resource resource-name)]
-    resource
-    (throw (ex-info (format "Invalid test resource: %s" resource-name) {:resource-name resource-name}))))
 
 (defn- read-edn-suite
   "Reads a raw test suite definition from an EDN source."
-  [f]
-  (edn/read-string {:readers {'resource resolve-test-resource}} (slurp f)))
-
-(defn- ^File resolve-test-file
-  "Resolves a test source path against the parent test suite file."
-  [^File suite-file test-source]
-  (let [suite-dir (.getParentFile suite-file)]
-    (io/file suite-dir test-source)))
-
-(defn- resolve-test-source
-  "Resolves a test definition into an absolute data source."
-  [^File suite-file test-source]
-  (cond
-    (string? test-source)
-    (resolve-test-file suite-file test-source)
-
-    (util/url? test-source)
-    test-source
-
-    :else
-    (throw (ex-info "Test source must be either a string or resource" {:source test-source}))))
+  [source]
+  (edn/read-string (slurp source)))
 
 (defn- load-directory-tests
   "Loads all tests defined within the specified directory."
@@ -87,24 +82,34 @@
         tests (load-directory-tests suite-name dir)]
     {suite-name {:tests tests}}))
 
+(defprotocol TestCasesSource
+  (load-tests [this suite-name]))
+
+(extend-protocol TestCasesSource
+  File
+  (load-tests [^File f suite-name]
+    (if (.isDirectory f)
+      (load-directory-tests suite-name f)
+      (if-let [t (load-source-test suite-name f)]
+        [t])))
+
+  URL
+  (load-tests [^URL url suite-name]
+    (if-let [t (load-source-test suite-name url)]
+      [t])))
+
 (defn- normalise-tests
   "Loads normalised test definitions from a test source referenced within an EDN test suite file.
    The source may resolve to multiple contained test definitions."
-  [suite-file suite-name test]
+  [suite-source suite-name test]
   (cond
     (string? test)
-    (let [test-file (resolve-test-file suite-file test)]
-      (if (.isDirectory test-file)
-        (load-directory-tests suite-name test-file)
-        (if-let [t (load-source-test suite-name test-file)]
-          [t])))
+    (let [test-source (resolve-relative suite-source test)]
+      (vec (load-tests test-source suite-name)))
 
-    (util/url? test)
-    (if-let [t (load-source-test suite-name test)]
-      [t])
-
+    ;;TODO: allow a test map to describe a collection of tests?
     (map? test)
-    (let [test-source (resolve-test-source suite-file (:source test))]
+    (let [test-source (resolve-relative suite-source (:source test))]
       [{:type   (or (:type test) (infer-source-test-type test-source))
         :source test-source
         :name   (or (:name test) (infer-source-test-name test-source))
@@ -115,32 +120,40 @@
 
 (defn- normalise-suite
   "Normalises a raw test suite definition."
-  [source-file suite-name suite]
+  [source suite-name suite]
   (cond
-    (vector? suite) (recur source-file suite-name {:tests suite})
-    (map? suite) (update suite :tests #(vec (mapcat (fn [t] (normalise-tests source-file suite-name t)) %)))
+    (vector? suite) (recur source suite-name {:tests suite})
+    (map? suite) (update suite :tests #(vec (mapcat (fn [t] (normalise-tests source suite-name t)) %)))
     :else (throw (ex-info "Suite definition must be a vector or a map" {:suite suite}))))
 
-(defmethod load-file-test-suite :edn [f]
-  (let [raw (read-edn-suite f)]
+(defmethod load-source-test-suite :edn [source]
+  (let [raw (read-edn-suite source)]
     (if (map? raw)
       (into {} (map (fn [[suite-name suite]]
-                      [suite-name (normalise-suite f suite-name suite)])
+                      [suite-name (normalise-suite source suite-name suite)])
                     raw))
-      (throw (ex-info "Root of suite document must be a map" {:file f})))))
+      (throw (ex-info "Root of test suite document must be a map" {:source source})))))
 
-(defmethod load-file-test-suite :default [f]
+(defmethod load-source-test-suite :default [f]
   nil)
 
-(defn load-test-suite
-  "Loads a test suite definition map from a given file. If a file is passed it is considered to contain
-   a single test of a type inferred from the file extension. If a directory is given the suite is constructed
-   from the suites represented by each contained file. If a test type cannot be inferred for a contained file
-   it is ignored and not included in the resulting suite."
-  [^File file-or-dir]
-  (if (.isDirectory file-or-dir)
-    (load-directory-test-suite file-or-dir)
-    (load-file-test-suite file-or-dir)))
+(defprotocol TestSuiteSource
+  (load-test-suite [this]
+    "Loads a test suite definition map from a given file. If a file is passed it is considered to contain
+     a single test of a type inferred from the file extension. If a directory is given the suite is constructed
+     from the suites represented by each contained file. If a test type cannot be inferred for a contained file
+     it is ignored and not included in the resulting suite."))
+
+(extend-protocol TestSuiteSource
+  File
+  (load-test-suite [file-or-dir]
+    (if (.isDirectory file-or-dir)
+      (load-directory-test-suite file-or-dir)
+      (load-source-test-suite file-or-dir)))
+
+  URL
+  (load-test-suite [url]
+    (load-source-test-suite url)))
 
 (defn- merge-raw-suite
   "Merges two raw test suite definition maps."
@@ -216,13 +229,16 @@
 (defn resolve-test-suites
   "Loads a sequence of test suite files, resolves any declared imports and merges the resulting suite maps
    into a single suite map."
-  [test-suite-files]
-  (let [raw (reduce (fn [acc suite-file]
-                      (let [suite (load-test-suite suite-file)]
+  [test-suite-sources]
+  (let [raw (reduce (fn [acc suite-source]
+                      (let [suite (load-test-suite suite-source)]
                         (merge-raw-test-suites acc suite)))
                     nil
-                    test-suite-files)]
+                    test-suite-sources)]
     (resolve-imports raw)))
+
+(defn classpath-test-suite-sources []
+  (util/resources "rdf-validator-suite.edn"))
 
 (defn suite-tests
   "Given a test suite map and a collection of test suite names to run, returns a sequence of test cases to be executed.

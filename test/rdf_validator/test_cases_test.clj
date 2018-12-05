@@ -1,7 +1,29 @@
 (ns rdf-validator.test-cases-test
   (:require [clojure.test :refer :all]
             [rdf-validator.test-cases :refer :all]
-            [clojure.java.io :as io]))
+            [clojure.java.io :as io])
+  (:import [java.net URI URL]))
+
+(deftest resolve-relative-test
+  (testing "Directory"
+    (let [dir (io/file "test/suites/queries")
+          rel (resolve-relative dir "foo.sparql")]
+      (is (= (io/file "test/suites/queries/foo.sparql") rel))))
+
+  (testing "File"
+    (let [f (io/file "test/suites/queries/ask.sparql")
+          rel (resolve-relative f "foo.sparql")]
+      (is (= (io/file "test/suites/queries/foo.sparql") rel))))
+
+  (testing "URI"
+    (let [uri (URI. "http://example.com/some/path/to.sparql")
+          rel (resolve-relative uri "foo.txt")]
+      (is (= (URI. "http://example.com/some/path/foo.txt") rel))))
+
+  (testing "URL"
+    (let [url (URL. "http://example.com/some/path/to.sparql")
+          rel (resolve-relative url "foo.txt")]
+      (is (= (URL. "http://example.com/some/path/foo.txt") rel)))))
 
 (deftest load-test-suite-query-file
   (let [f (io/file "test/suites/select.sparql")
@@ -52,8 +74,8 @@
            suite))))
 
 (deftest load-test-suite-with-resources
-  (let [f (io/file "test/suites/with-resources.edn")
-        suite (load-test-suite f)]
+  (let [url (io/resource "resource-suite.edn")
+        suite (load-test-suite url)]
     (is (= {:resources {:tests [{:type :sparql
                                  :source (io/resource "ask_resource.sparql")
                                  :suite :resources
@@ -74,10 +96,6 @@
                                {:type :other
                                 :source (io/file "test/suites/queries/select.sparql")
                                 :name "select"
-                                :suite :explicit}
-                               {:type :sparql
-                                :source (io/resource "ask_resource.sparql")
-                                :name "embedded"
                                 :suite :explicit}]}}
            suite))))
 
@@ -159,8 +177,8 @@
       (is (thrown? Exception (resolve-imports suites))))))
 
 (deftest resolve-test-suites-imports
-  (let [suite-files [(io/file "test/suites/simple.edn")
-                     (io/file "test/suites/imports.edn")]
+  (let [suite-sources [(io/file "test/suites/simple.edn")
+                       (io/resource "imports.edn")]
         expected {:simple {:tests [{:type :sparql
                                     :source (io/file "test/suites/queries/ask.sparql")
                                     :suite :simple
@@ -177,7 +195,7 @@
                                      :source (io/resource "ask_resource.sparql")
                                      :suite :imports
                                      :name "ask_resource"}]}}]
-    (is (= expected (resolve-test-suites suite-files)))))
+    (is (= expected (resolve-test-suites suite-sources)))))
 
 (deftest suite-tests-test
   (let [test1 {:name "test1"}

@@ -151,6 +151,62 @@ same suite file. For example given two test files:
 this is valid as long as `suite1.edn` is provided as a suite whenever `suite2.edn` is required e.g.
 
     java -jar rdf-validator-standalone.jar --endpoint data.ttl --suite suite1.edn --suite suite2.edn
+    
+### Locating suites on the Java classpath
+
+In addition to test suites explicitly provided through the `--suite` parameter, rdf-validator also searches the classpath for test
+suite EDN definitions. The searched test suite files should be called `rdf-validator-suite.edn` and follow the format detailed above.
+When running from the command line, the containing directory should be added to the Java classpath using the `-classpath` option.
+Given an `rdf-validator-suite.edn` file:
+
+#### rdf-validator-suite.edn
+```clojure
+{:cp-suite ["test1.sparql"
+            "test2.sparql"]}
+```
+
+If this file is placed alongside the referenced `test1.sparql` and `test2.sparql` files in the directory `/tmp/rdf/my-suite` it can
+be run as follows:
+
+    java -cp "/tmp/rdf/my-suite:rdf-validator-standalone.jar" clojure.main -m rdf-validator.core --endpoint data.ttl
+
+Use of the `-jar` option overrides any specified `-classpath` value, so the command above explicitly adds `rdf-validator.jar` to
+the classpath and invokes `clojure.main` instead (which in turn executes the `rdf-validator` main method).
+
+### Running via the Clojure tool
+
+Manually building a Java classpath as shown above is tedious and error-prone. The [Clojure command-line tool](https://clojure.org/reference/deps_and_cli)
+can automate the generation of the classpath and allows test suite directories to be packaged an distributed through `.jar` files or
+remote `git` repositories. To run `rdf-validator` through the `clojure` tool, first create a new directory containing a `deps.edn` file:
+
+#### deps.edn
+```clojure
+{:deps {swirrl/rdf-validator {:local/root "/path/to/rdf-validator.jar"}
+        suite {:local/root "/path/to/test/suite"}}
+ :aliases {:rdf-validator {:main-opts ["-m" "rdf-validator.core"]}}}
+```
+
+The `/path/to/test/suite` directory should contain a `src` directory containing an `rdf-validator-suite.edn` file with the 
+format described above. The `clojure` tool will put the `/path/to/test/suite/src` directory on the java classpath and the 
+`:rdf-validator` alias will invoke `clojure.main` with the required arguments.
+
+Now `rdf-validator` can be run with:
+
+    clj -A:rdf-validator --endpoint data.ttl
+    
+This will run the test cases defined in `/path/to/test/suite/src/rdf-validator-suite.edn`
+
+The `suite` dependency does not necessarily need to be defined locally. The `clojure` tool allows dependencies to be specified
+in remote `git` repositories or `.jar` files. If the test suite was hosted in a `git` repository instead, `deps.edn` could be
+modified to refer to the desired commit. Similarly, the `rdf-validator` dependency can refer to a version on Github rather than
+a local `.jar` file:
+
+#### deps.edn
+```clojure
+{:deps {swirrl/rdf-validator {:git/url "https://github.com/Swirrl/rdf-validator.git" :sha "626f1df421f0feb5e78ca81c102f3120350c0dfd"}
+        suite {:git/url "https://github.com/my/rdf/validator/suite" :sha "0f95c170d3799af13f51a5945339cae972866ff0"}}
+ :aliases {:rdf-validator {:main-opts ["-m" "rdf-validator.core"]}}}
+```
 
 ### Running individual suites
 

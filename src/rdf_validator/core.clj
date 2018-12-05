@@ -46,34 +46,34 @@
               [f]))
           suites))
 
-(defn run-sparql-ask-test [{:keys [source-file query-string]} endpoint]
+(defn run-sparql-ask-test [{:keys [test-source query-string]} endpoint]
   (let [pquery (endpoint/prepare-query endpoint query-string)
         failed (query/execute pquery)]
-    {:source-file source-file
+    {:test-source test-source
      :result      (if failed :failed :passed)
      :errors      (if failed ["ASK query returned true"] [])}))
 
-(defn run-sparql-select-test [{:keys [source-file query-string]} endpoint]
+(defn run-sparql-select-test [{:keys [test-source query-string]} endpoint]
   (let [pquery (endpoint/prepare-query endpoint query-string)
         results (query/execute pquery)
         failed (pos? (count results))]
-    {:source-file source-file
+    {:test-source test-source
      :result      (if failed :failed :passed)
      :errors      (mapv str results)}))
 
-(defn run-test-case [{f :source :as test-case} query-variables endpoint]
+(defn run-test-case [{:keys [source] :as test-case} query-variables endpoint]
   (try
-    (let [^String sparql-str (load-sparql-template f query-variables)
+    (let [^String sparql-str (load-sparql-template source query-variables)
           query (QueryFactory/create sparql-str Syntax/syntaxSPARQL_11)
-          test {:source-file f :query-string sparql-str}]
+          test {:test-source source :query-string sparql-str}]
       (cond
         (.isAskType query) (run-sparql-ask-test test endpoint)
         (.isSelectType query) (run-sparql-select-test test endpoint)
-        :else {:source-file f
+        :else {:test-source source
                :result :ignored
                :errors []}))
     (catch Exception ex
-      {:source-file f
+      {:test-source source
        :result :errored
        :errors [(.getMessage ex)]})))
 
@@ -113,10 +113,10 @@
   (let [{:keys [errors options] :as result} (cli/parse-opts args cli-options)]
     (if (nil? errors)
       (try
-        (let [suite-files (:suite options)
+        (let [suite-sources (concat (:suite options) (tc/classpath-test-suite-sources))
               endpoint (create-endpoint options)
               query-variables (:variables options)
-              suites (tc/resolve-test-suites suite-files)
+              suites (tc/resolve-test-suites suite-sources)
               suites-to-run (:arguments result)
               test-cases (tc/suite-tests suites suites-to-run)
               test-reporter (reporting/->ConsoleTestReporter)
@@ -125,6 +125,7 @@
         (catch Exception ex
           (binding [*out* *err*]
             (println (.getMessage ex))
+            (.printStackTrace ex)
             (System/exit 1))))
       (do (invalid-args result)
           (System/exit 1)))))
