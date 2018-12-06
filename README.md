@@ -186,8 +186,18 @@ remote `git` repositories. To run `rdf-validator` through the `clojure` tool, fi
  :aliases {:rdf-validator {:main-opts ["-m" "rdf-validator.core"]}}}
 ```
 
-The `/path/to/test/suite` directory should contain a `src` directory containing an `rdf-validator-suite.edn` file with the 
-format described above. The `clojure` tool will put the `/path/to/test/suite/src` directory on the java classpath and the 
+The `/path/to/test/suite` directory should contain `deps.edn` file along with a `src` directory containing an `rdf-validator-suite.edn` file with the 
+format described above i.e.
+
+    /path/to/test/suite
+      |---- deps.edn
+      |---- src
+              |---- rdf-validator-suite.edn
+              |---- test1.sparql
+              |---- test2.sparql
+
+The `deps.edn` file can be empty, although it can also be used to reference dependencies such as other test suites it imports 
+from (see below on how to specify dependencies). The `clojure` tool will put the `/path/to/test/suite/src` directory on the java classpath and the 
 `:rdf-validator` alias will invoke `clojure.main` with the required arguments.
 
 Now `rdf-validator` can be run with:
