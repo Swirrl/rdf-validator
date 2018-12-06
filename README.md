@@ -203,7 +203,7 @@ a local `.jar` file:
 
 #### deps.edn
 ```clojure
-{:deps {swirrl/rdf-validator {:git/url "https://github.com/Swirrl/rdf-validator.git" :sha "626f1df421f0feb5e78ca81c102f3120350c0dfd"}
+{:deps {swirrl/rdf-validator {:git/url "https://github.com/Swirrl/rdf-validator.git" :sha "9e87347db0784cca974ad140b5091e1b3ae3c4f8"}
         suite {:git/url "https://github.com/my/rdf/validator/suite" :sha "0f95c170d3799af13f51a5945339cae972866ff0"}}
  :aliases {:rdf-validator {:main-opts ["-m" "rdf-validator.core"]}}}
 ```
