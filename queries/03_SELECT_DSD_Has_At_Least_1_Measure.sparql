@@ -5,24 +5,20 @@ PREFIX qb:      <http://purl.org/linked-data/cube#>
 PREFIX xsd:     <http://www.w3.org/2001/XMLSchema#>
 PREFIX owl:     <http://www.w3.org/2002/07/owl#>
 
-SELECT (?dsd AS ?dsdWithoutDeclaredMeasure) 
-WHERE {
-
-  {
-  	SELECT ?cp {
-  	{
-  		BIND(qb:componentProperty as ?cp)
-  	}
-  	UNION
-  	{ 	SELECT ?cp 
-  		WHERE { 
-  			?cp rdfs:subPropertyOf+ qb:componentProperty . }  
-		}
-  	}
-  }
-
+SELECT ?dsd WHERE {
   ?dsd a qb:DataStructureDefinition .
-  FILTER NOT EXISTS { ?dsd qb:component [?cp [a qb:MeasureProperty]] }
+  FILTER NOT EXISTS {
+    # ok if dsd has component with qb:measure
+    ?dsd qb:component [qb:measure ?m] .
+  }
+  FILTER NOT EXISTS {
+    # ok if component has qb:componentProperty (or a subProperty)
+    # of MeasureType
+    ?dsd qb:component ?comp .
+    ?comp ?cp ?p .
+    ?cp rdfs:subPropertyOf* qb:componentProperty .
+    ?p a qb:MeasureType .
+  }
 }
 
 #! IC-3. DSD includes measure - Every qb:DataStructureDefinition must include at least one declared measure. 
