@@ -1,0 +1,2 @@
+{:simple ["queries/ask.sparql"
+          "queries/select.sparql"]}

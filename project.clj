@@ -9,4 +9,5 @@
   :lein-tools-deps/config {:config-files [:install :project]}
   :main ^:skip-aot rdf-validator.core
   :target-path "target/%s"
-  :profiles {:uberjar {:aot :all}})
+  :profiles {:uberjar {:aot :all}
+             :dev {:resource-paths ["test/resources"]}})

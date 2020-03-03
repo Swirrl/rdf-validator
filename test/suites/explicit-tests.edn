@@ -1,0 +1,3 @@
+{:explicit [{:source "queries/ask.sparql"}
+            {:type :other
+             :source "queries/select.sparql"}]}

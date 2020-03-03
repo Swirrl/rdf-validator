@@ -5,6 +5,7 @@
         org.apache.jena/apache-jena-libs {:mvn/version "3.8.0" :extension "pom"}
         selmer {:mvn/version "1.12.0"}
         org.slf4j/slf4j-api {:mvn/version "1.7.25"}
+        com.stuartsierra/dependency {:mvn/version "0.2.0"}
 
         org.apache.logging.log4j/log4j-api {:mvn/version "2.11.0"}
         org.apache.logging.log4j/log4j-core {:mvn/version "2.11.0"}
