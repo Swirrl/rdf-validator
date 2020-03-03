@@ -37,15 +37,16 @@
 (deftest load-test-suite-query-directory
   (let [d (io/file "test/suites/queries")
         suite (load-test-suite d)]
-    (is (= {:queries {:tests [{:type :sparql
-                               :source (io/file d "ask.sparql")
-                               :suite :queries
-                               :name "ask"}
-                              {:type :sparql
-                               :source (io/file d "select.sparql")
-                               :suite :queries
-                               :name "select"}]}}
-           suite))))
+    (is (= {:queries {:tests #{{:type :sparql
+                                  :source (io/file d "ask.sparql")
+                                  :suite :queries
+                                 :name "ask"}
+                                {:type :sparql
+                                 :source (io/file d "select.sparql")
+                                 :suite :queries
+                                 :name "select"}}}}
+           ;;TOOD: update :tests key to always be a set?
+           (update-in suite [:queries :tests] set)))))
 
 (deftest load-test-suite-simple
   (let [f (io/file "test/suites/simple.edn")
@@ -63,15 +64,16 @@
 (deftest load-test-suite-referencing-directory
   (let [f (io/file "test/suites/dir.edn")
         suite (load-test-suite f)]
-    (is (= {:dir {:tests [{:type :sparql
-                           :source (io/file "test/suites/queries/ask.sparql")
-                           :suite :dir
-                           :name "ask"}
-                          {:type :sparql
-                           :source (io/file "test/suites/queries/select.sparql")
-                           :suite :dir
-                           :name "select"}]}}
-           suite))))
+    (is (= {:dir {:tests #{{:type :sparql
+                            :source (io/file "test/suites/queries/ask.sparql")
+                            :suite :dir
+                            :name "ask"}
+                           {:type :sparql
+                            :source (io/file "test/suites/queries/select.sparql")
+                            :suite :dir
+                            :name "select"}}}}
+           ;;TODO: update :tests key to always be a set?
+           (update-in suite [:dir :tests] set)))))
 
 (deftest load-test-suite-with-resources
   (let [url (io/resource "resource-suite.edn")
