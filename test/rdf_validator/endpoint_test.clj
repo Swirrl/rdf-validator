@@ -16,16 +16,16 @@
         file-uri (str "file://" (.getAbsolutePath rel-file))
         repo (parse-repository file-uri)]
     (is (= 2 (count (with-open [conn (repo/->connection repo)]
-                      (rdf/statements conn)))))))
+                      (into [] (rdf/statements conn))))))))
 
 (deftest parse-repository-directory-test
   (let [dir-str "test/data/test-dir"
         repo (parse-repository dir-str)]
     (is (= 2 (count (with-open [conn (repo/->connection repo)]
-                      (rdf/statements conn)))))))
+                      (into [] (rdf/statements conn))))))))
 
 (deftest parse-repository-file-name-test
   (let [file-str "test/data/example.ttl"
         repo (parse-repository file-str)]
     (is (= 2 (count (with-open [conn (repo/->connection repo)]
-                      (rdf/statements conn)))))))
+                      (into [] (rdf/statements conn))))))))
