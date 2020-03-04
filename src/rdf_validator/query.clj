@@ -1,6 +1,6 @@
 (ns rdf-validator.query
-  (:require [grafter.rdf.repository :as repo])
-  (:import (org.openrdf.query BooleanQuery TupleQuery Update GraphQuery)))
+  (:require [grafter-2.rdf4j.repository :as repo])
+  (:import (org.eclipse.rdf4j.query BooleanQuery TupleQuery Update GraphQuery)))
 
 (defn get-query-type
   "Returns a keyword indicating the type query represented by the

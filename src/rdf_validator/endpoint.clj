@@ -1,6 +1,7 @@
 (ns rdf-validator.endpoint
-  (:require [grafter.rdf.repository :as repo]
-            [grafter.rdf :as rdf]
+  (:require [grafter-2.rdf4j.repository :as repo]
+            [grafter-2.rdf4j.io :as rdf]
+            [grafter-2.rdf.protocols :as pr]
             [clojure.java.io :as io]
             [clojure.tools.logging :as log])
   (:import [java.net URISyntaxException URI]
@@ -9,9 +10,10 @@
 (defn file->repository [^File f]
   (if (.isDirectory f)
     (let [r (repo/sail-repo)]
-      (log/info "Creating repository from directory: " (.getAbsolutePath f))
-      (doseq [df (.listFiles f)]
-        (rdf/add r (rdf/statements df)))
+      (with-open [conn (repo/->connection r)]
+        (log/info "Creating repository from directory: " (.getAbsolutePath f))
+        (doseq [df (.listFiles f)]
+          (pr/add conn (rdf/statements df))))
       r)
     (do
       (log/info "Creating repository from file: " (.getAbsolutePath f))
