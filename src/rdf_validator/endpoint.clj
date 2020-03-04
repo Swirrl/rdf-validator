@@ -52,8 +52,5 @@
 (defn create-endpoint [repo graphs]
   {:repository repo :dataset (create-dataset graphs)})
 
-(defn prepare-query [{:keys [repository dataset] :as endpoint} query-string]
-  (repo/prepare-query repository query-string dataset))
-
 (def dataset :dataset)
 (def repository :repository)
