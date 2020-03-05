@@ -2,6 +2,7 @@
   (:gen-class)
   (:require [clojure.java.io :as io]
             [clojure.tools.cli :as cli]
+            [grafter-2.rdf4j.repository :as repo]
             [rdf-validator.endpoint :as endpoint]
             [rdf-validator.query :as query]
             [rdf-validator.reporting :as reporting]
@@ -46,20 +47,24 @@
               [f]))
           suites))
 
-(defn run-sparql-ask-test [{:keys [test-source query-string]} endpoint]
-  (let [pquery (endpoint/prepare-query endpoint query-string)
-        failed (query/execute pquery)]
-    {:test-source test-source
-     :result      (if failed :failed :passed)
-     :errors      (if failed ["ASK query returned true"] [])}))
+(defn run-sparql-ask-test 
+  [{:keys [test-source query-string]} {:keys [repository dataset] :as endpoint}]
+  (with-open [conn (repo/->connection repository)]
+    (let [pquery (repo/prepare-query conn query-string dataset)
+          failed (query/execute pquery)]
+      {:test-source test-source
+       :result      (if failed :failed :passed)
+       :errors      (if failed ["ASK query returned true"] [])})))
 
-(defn run-sparql-select-test [{:keys [test-source query-string]} endpoint]
-  (let [pquery (endpoint/prepare-query endpoint query-string)
-        results (query/execute pquery)
-        failed (pos? (count results))]
-    {:test-source test-source
-     :result      (if failed :failed :passed)
-     :errors      (mapv str results)}))
+(defn run-sparql-select-test 
+  [{:keys [test-source query-string]} {:keys [repository dataset] :as endpoint}]
+  (with-open [conn (repo/->connection repository)] 
+    (let [pquery (repo/prepare-query conn query-string dataset)
+          results (query/execute pquery)
+          failed (pos? (count results))]
+      {:test-source test-source
+       :result      (if failed :failed :passed)
+       :errors      (mapv str results)})))
 
 (defn run-test-case [{:keys [source] :as test-case} query-variables endpoint]
   (try
