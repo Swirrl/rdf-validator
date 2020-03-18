@@ -41,8 +41,6 @@
 (defn on-missing-query-template-variable [{:keys [tag-value] :as tag} context]
   (throw (ex-info (format "No variable specified for template variable '%s'" tag-value) {})))
 
-(set-missing-value-formatter! on-missing-query-template-variable)
-
 (defn load-sparql-template [f variables]
   (let [query-string (slurp f)]
     (without-escaping (selmer/render query-string variables))))
@@ -138,14 +136,15 @@
 (defn -main
   [& args]
   (try
+    (set-missing-value-formatter! on-missing-query-template-variable)
     (let [{:keys [failed errored] :as test-summary} (inner-main args)]
       (System/exit (+ failed errored)))
     (catch ExceptionInfo exi 
-     (let [exi-data (ex-data exi)]
-       (if (= :invalid-cli-arguments (:type exi-data))
-         (report-invalid-args (:cli-result exi-data))
-         (report-exception exi))
-       (System/exit 1)))
+      (let [exi-data (ex-data exi)]
+        (if (= :invalid-cli-arguments (:type exi-data))
+          (report-invalid-args (:cli-result exi-data))
+          (report-exception exi))
+        (System/exit 1)))
     (catch Exception ex
       (report-exception ex)
       (System/exit 1))))
