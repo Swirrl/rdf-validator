@@ -35,8 +35,7 @@
 (defn- report-exception [^Exception ex]
   (binding [*out* *err*]
     (println (.getMessage ex))
-    (.printStackTrace ex)
-    (System/exit 1)))
+    (.printStackTrace ex)))
 
 (defn on-missing-query-template-variable [{:keys [tag-value] :as tag} context]
   (throw (ex-info (format "No variable specified for template variable '%s'" tag-value) {})))
