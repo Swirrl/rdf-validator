@@ -1,12 +1,22 @@
 {:deps {org.clojure/clojure {:mvn/version "1.10.0"}
+
+        ;; TODO strictly speaking we should move this dep into app
+        ;; alias and refactor so rdf-validator.core is separated from
+        ;; API/library.
         org.clojure/tools.cli {:mvn/version "0.3.7"}
-        org.clojure/tools.logging {:mvn/version "0.4.1"}
+
+        org.clojure/tools.logging {:mvn/version "1.0.0"}
         grafter {:mvn/version "2.1.7"}
         org.apache.jena/apache-jena-libs {:mvn/version "3.10.0" :extension "pom"}
         selmer {:mvn/version "1.12.0"}
-        org.slf4j/slf4j-api {:mvn/version "1.7.25"}
-        com.stuartsierra/dependency {:mvn/version "0.2.0"}
+        com.stuartsierra/dependency {:mvn/version "0.2.0"}}
+ :paths ["src" "resources"]
 
-        org.apache.logging.log4j/log4j-api {:mvn/version "2.11.0"}
-        org.apache.logging.log4j/log4j-core {:mvn/version "2.11.0"}
-        org.apache.logging.log4j/log4j-slf4j-impl {:mvn/version "2.11.0"}}}
+ :aliases {:dev {:extra-deps {lambdaisland/kaocha {:mvn/version "0.0-601"}}
+                 :extra-paths ["test/resources"]}
+
+           :app {:extra-paths ["app-resources"]
+                 :extra-deps {org.slf4j/slf4j-api {:mvn/version "1.7.25"}
+                              org.apache.logging.log4j/log4j-api {:mvn/version "2.11.0"}
+                              org.apache.logging.log4j/log4j-core {:mvn/version "2.11.0"}
+                              org.apache.logging.log4j/log4j-slf4j-impl {:mvn/version "2.11.0"}}}}}

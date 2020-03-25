@@ -1,9 +1,20 @@
-language: clojure
-lein: 2.8.1
+dist: bionic
+language: generic
+
+cache:
+  directories:
+    - $HOME/.m2
+    - .cpcache # tools.deps classpath cache
+    - ~/.cache
+    - ~/.gitlibs
+
 
 before_install:
   - sudo apt-get install -y curl rlwrap
   - "travis/install_clojure.sh"
+
+script:
+  ./bin/kaocha
 
 after_success:
   - lein uberjar
@@ -16,4 +27,3 @@ deploy:
   on:
     tags: true
     condition: $TRAVIS_TAG =~ ^[0-9]+\.[0-9]+\.[0-9]+$
-
