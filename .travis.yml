@@ -1,5 +1,12 @@
-language: clojure
-lein: 2.8.1
+language: generic
+
+cache:
+  directories:
+    - $HOME/.m2
+    - .cpcache # tools.deps classpath cache
+    - ~/.cache
+    - ~/.gitlibs
+
 
 before_install:
   - sudo apt-get install -y curl rlwrap
@@ -19,4 +26,3 @@ deploy:
   on:
     tags: true
     condition: $TRAVIS_TAG =~ ^[0-9]+\.[0-9]+\.[0-9]+$
-
