@@ -12,7 +12,7 @@
         com.stuartsierra/dependency {:mvn/version "0.2.0"}}
  :paths ["src" "resources"]
 
- :aliases {:dev {
+ :aliases {:dev {:extra-deps {lambdaisland/kaocha {:mvn/version "0.0-601"}}
                  :extra-paths ["test/resources"]}
 
            :app {:extra-paths ["app-resources"]
