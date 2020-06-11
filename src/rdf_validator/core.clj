@@ -70,19 +70,20 @@
        :result      (if failed :failed :passed)
        :errors      (mapv str results)})))
 
-(defn run-test-case [{:keys [source] :as test-case} query-variables endpoint]
+(defn run-test-case [test-case query-variables endpoint]
   (try
-    (let [^String sparql-str (load-sparql-template source query-variables)
+    (let [source (:source test-case)
+          ^String sparql-str (load-sparql-template source query-variables)
           query (QueryFactory/create sparql-str Syntax/syntaxSPARQL_11)
           test {:test-source source :query-string sparql-str}]
       (cond
         (.isAskType query) (run-sparql-ask-test test endpoint)
         (.isSelectType query) (run-sparql-select-test test endpoint)
-        :else {:test-source source
+        :else {:test-case test-case
                :result :ignored
                :errors []}))
     (catch Exception ex
-      {:test-source source
+      {:test-case test-case
        :result :errored
        :errors [(.getMessage ex)]})))
 
