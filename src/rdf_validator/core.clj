@@ -86,7 +86,10 @@
        :result :errored
        :errors [(.getMessage ex)]})))
 
-(defn run-test-cases [test-cases query-variables endpoint reporter]
+(defn run-test-cases [test-cases query-variables endpoint]
+  (map #(run-test-case % query-variables endpoint) test-cases))
+
+(defn report-test-cases [test-cases query-variables endpoint reporter]
   (let [summary (reduce (fn [summary [test-index test-case]]
                           (let [{:keys [result] :as test-result} (run-test-case test-case query-variables endpoint)]
                             (reporting/report-test-result! reporter (assoc test-result :number (inc test-index)))
@@ -128,7 +131,7 @@
             suites-to-run (:arguments result)
             test-cases (tc/suite-tests suites suites-to-run)
             test-reporter (reporting/->ConsoleTestReporter)]
-        (run-test-cases test-cases query-variables endpoint test-reporter))
+        (report-test-cases test-cases query-variables endpoint test-reporter))
       (throw (ex-info "Invalid command line arguments" {:type :invalid-cli-arguments
                                                         :cli-result result})))))
 
