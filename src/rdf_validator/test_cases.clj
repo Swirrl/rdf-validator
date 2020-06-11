@@ -5,7 +5,8 @@
             [com.stuartsierra.dependency :as dep]
             [rdf-validator.util :as util])
   (:import [java.io File]
-           [java.net URL URI]))
+           [java.net URL URI]
+           (clojure.lang IPersistentMap)))
 
 (defprotocol Relatable
   (resolve-relative [this ^String relative]
@@ -25,7 +26,11 @@
   URL
   (resolve-relative [^URL url ^String relative]
     (let [^URI uri (resolve-relative (.toURI url) relative)]
-      (.toURL uri))))
+      (.toURL uri)))
+
+  IPersistentMap
+  (resolve-relative [_m ^String relative]
+    (io/resource relative)))
 
 (defn- load-source-test
   "Loads a test definition from the specified data source. Infers the test type and name from the name of
@@ -126,12 +131,15 @@
     (map? suite) (update suite :tests #(vec (mapcat (fn [t] (normalise-tests source suite-name t)) %)))
     :else (throw (ex-info "Suite definition must be a vector or a map" {:suite suite}))))
 
+(defn load-test-suite-map [m source]
+  (into {} (map (fn [[suite-name suite]]
+                  [suite-name (normalise-suite source suite-name suite)])
+                m)))
+
 (defmethod load-source-test-suite :edn [source]
   (let [raw (read-edn-suite source)]
     (if (map? raw)
-      (into {} (map (fn [[suite-name suite]]
-                      [suite-name (normalise-suite source suite-name suite)])
-                    raw))
+      (load-test-suite-map raw source)
       (throw (ex-info "Root of test suite document must be a map" {:source source})))))
 
 (defmethod load-source-test-suite :default [f]
@@ -153,7 +161,11 @@
 
   URL
   (load-test-suite [url]
-    (load-source-test-suite url)))
+    (load-source-test-suite url))
+
+  IPersistentMap
+  (load-test-suite [m]
+    (load-test-suite-map m m)))
 
 (defn- merge-raw-suite
   "Merges two raw test suite definition maps."
