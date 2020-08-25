@@ -70,29 +70,33 @@
        :result      (if failed :failed :passed)
        :errors      (mapv str results)})))
 
-(defn run-test-case [{:keys [source] :as test-case} query-variables endpoint]
+(defn run-test-case [test-case query-variables endpoint]
   (try
-    (let [^String sparql-str (load-sparql-template source query-variables)
+    (let [source (:source test-case)
+          ^String sparql-str (load-sparql-template source query-variables)
           query (QueryFactory/create sparql-str Syntax/syntaxSPARQL_11)
           test {:test-source source :query-string sparql-str}]
       (cond
         (.isAskType query) (run-sparql-ask-test test endpoint)
         (.isSelectType query) (run-sparql-select-test test endpoint)
-        :else {:test-source source
+        :else {:test-case test-case
                :result :ignored
                :errors []}))
     (catch Exception ex
-      {:test-source source
+      {:test-case test-case
        :result :errored
        :errors [(.getMessage ex)]})))
 
-(defn run-test-cases [test-cases query-variables endpoint reporter]
-  (let [summary (reduce (fn [summary [test-index test-case]]
-                          (let [{:keys [result] :as test-result} (run-test-case test-case query-variables endpoint)]
-                            (reporting/report-test-result! reporter (assoc test-result :number (inc test-index)))
-                            (update summary result inc)))
+(defn run-test-cases [test-cases query-variables endpoint]
+  (map #(run-test-case % query-variables endpoint) test-cases))
+
+(defn report-test-cases [test-cases query-variables endpoint reporter]
+  (let [test-results (run-test-cases test-cases query-variables endpoint)
+        summary (reduce (fn [summary [test-index {:keys [result] :as test-result}]]
+                          (reporting/report-test-result! reporter (assoc test-result :number (inc test-index)))
+                          (update summary result inc))
                         {:failed 0 :passed 0 :errored 0 :ignored 0}
-                        (map-indexed vector test-cases))]
+                        (map-indexed vector test-results))]
     (reporting/report-test-summary! reporter summary)
     summary))
 
@@ -128,7 +132,7 @@
             suites-to-run (:arguments result)
             test-cases (tc/suite-tests suites suites-to-run)
             test-reporter (reporting/->ConsoleTestReporter)]
-        (run-test-cases test-cases query-variables endpoint test-reporter))
+        (report-test-cases test-cases query-variables endpoint test-reporter))
       (throw (ex-info "Invalid command line arguments" {:type :invalid-cli-arguments
                                                         :cli-result result})))))
 
