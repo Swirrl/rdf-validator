@@ -1,3 +1,4 @@
+
 {:deps {org.clojure/clojure {:mvn/version "1.10.0"}
 
         ;; TODO strictly speaking we should move this dep into app
@@ -6,9 +7,9 @@
         org.clojure/tools.cli {:mvn/version "0.3.7"}
 
         org.clojure/tools.logging {:mvn/version "1.0.0"}
-        grafter {:mvn/version "2.1.7"}
+        grafter/grafter {:mvn/version "2.1.7"}
         org.apache.jena/apache-jena-libs {:mvn/version "3.10.0" :extension "pom"}
-        selmer {:mvn/version "1.12.0"}
+        selmer/selmer {:mvn/version "1.12.0"}
         com.stuartsierra/dependency {:mvn/version "0.2.0"}}
  :paths ["src" "resources"]
 
