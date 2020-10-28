@@ -203,7 +203,10 @@
         independent-suites (remove (fn [s] (contains? dep-suites s)) (keys raw-suites))]
     (concat independent-suites (dep/topo-sort dep-graph))))
 
-(defn- test-key [{suite :suite test-name :name}]
+(defn test-key
+  "Given a test-case with a :suite and a :name builds a
+  composite :test-id key."
+  [{suite :suite test-name :name}]
   (keyword (name suite) test-name))
 
 (defn- resolve-suite

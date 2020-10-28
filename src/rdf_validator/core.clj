@@ -51,31 +51,51 @@
               [f]))
           suites))
 
-(defn run-sparql-ask-test 
-  [{:keys [test-source query-string]} {:keys [repository dataset] :as endpoint}]
+(defn run-sparql-ask-test
+  [{:keys [test-source query-string] :as test-case} {:keys [repository dataset] :as endpoint}]
   (with-open [conn (repo/->connection repository)]
     (let [pquery (repo/prepare-query conn query-string dataset)
           failed (query/execute pquery)]
-      {:test-source test-source
-       :result      (if failed :failed :passed)
-       :errors      (if failed ["ASK query returned true"] [])})))
+      (assoc test-case
+             :test-source test-source
+             :result      (if failed :failed :passed)
+             :errors      (if failed ["ASK query returned true"] [])))))
 
-(defn run-sparql-select-test 
-  [{:keys [test-source query-string]} {:keys [repository dataset] :as endpoint}]
-  (with-open [conn (repo/->connection repository)] 
+(defn run-sparql-select-test
+  [{:keys [test-source query-string] :as test-case} {:keys [repository dataset] :as endpoint}]
+  (with-open [conn (repo/->connection repository)]
     (let [pquery (repo/prepare-query conn query-string dataset)
           results (query/execute pquery)
           failed (pos? (count results))]
-      {:test-source test-source
-       :result      (if failed :failed :passed)
-       :errors      (mapv str results)})))
+      (assoc test-case
+             :test-source test-source
+             :result      (if failed :failed :passed)
+             :errors      (mapv identity results)))))
 
-(defn run-test-case [test-case query-variables endpoint]
+(defn run-test-case
+  "Takes a test case and returns a test-result.
+
+  A test-result is the test-case map with the additional required
+  keys:
+
+  :result           - with a value of :passed, :failed, :errored or :ignored
+  :test-id          - the :suite combined with the test :name forming a composite key id.
+  :errors           - the results returned from the validation as failures
+  :query-variables  - the bindings the query ran with (if any)
+  :endpoint         - then endpoint the query ran against
+
+  "
+  [test-case query-variables endpoint]
   (try
     (let [source (:source test-case)
           ^String sparql-str (load-sparql-template source query-variables)
           query (QueryFactory/create sparql-str Syntax/syntaxSPARQL_11)
-          test {:test-source source :query-string sparql-str}]
+          test (assoc test-case
+                      :test-source source
+                      :query-string sparql-str
+                      :test-id (tc/test-key test-case)
+                      :endpoint endpoint
+                      :query-variables query-variables)]
       (cond
         (.isAskType query) (run-sparql-ask-test test endpoint)
         (.isSelectType query) (run-sparql-select-test test endpoint)
@@ -93,7 +113,9 @@
 (defn report-test-cases [test-cases query-variables endpoint reporter]
   (let [test-results (run-test-cases test-cases query-variables endpoint)
         summary (reduce (fn [summary [test-index {:keys [result] :as test-result}]]
-                          (reporting/report-test-result! reporter (assoc test-result :number (inc test-index)))
+                          (reporting/report-test-result! reporter (assoc test-result
+                                                                         :number (inc test-index)
+                                                                         :total (count test-results)))
                           (update summary result inc))
                         {:failed 0 :passed 0 :errored 0 :ignored 0}
                         (map-indexed vector test-results))]
@@ -121,7 +143,7 @@
     :parse-fn parse-variables-file
     :default {}]])
 
-(defn inner-main 
+(defn inner-main
   [args]
   (let [{:keys [errors options] :as result} (cli/parse-opts args cli-options)]
     (if (nil? errors)
@@ -142,7 +164,7 @@
     (set-missing-value-formatter! on-missing-query-template-variable)
     (let [{:keys [failed errored] :as test-summary} (inner-main args)]
       (System/exit (+ failed errored)))
-    (catch ExceptionInfo exi 
+    (catch ExceptionInfo exi
       (let [exi-data (ex-data exi)]
         (if (= :invalid-cli-arguments (:type exi-data))
           (report-invalid-args (:cli-result exi-data))
