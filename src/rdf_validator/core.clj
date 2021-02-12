@@ -68,7 +68,7 @@
           failed (pos? (count results))]
       {:test-source test-source
        :result      (if failed :failed :passed)
-       :errors      (mapv str results)})))
+       :errors results})))
 
 (defn run-test-case [test-case query-variables endpoint]
   (let [source (:source test-case)]
