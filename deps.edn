@@ -14,7 +14,7 @@
  :paths ["src" "resources"]
 
  :aliases {:dev {:extra-deps {lambdaisland/kaocha {:mvn/version "0.0-601"}
-                              swirrl/validations.misc {:git/url "git@github.com:Swirrl/pmd-rdf-validations.git"
+                              swirrl/validations.misc {:git/url "https://github.com/Swirrl/pmd-rdf-validations.git"
                                                        :sha "b57cadccbb801fca981c83c2eaccfa4a0cd9f3bc"
                                                        :deps/manifest :deps
                                                        :deps/root "misc"}}
