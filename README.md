@@ -59,7 +59,7 @@ To do this we can include a 3rd party suite [such as those found in this repo](h
                                 :deps/root "qb"}
         }
  :aliases {:rdf-validator {:extra-deps { swirrl/rdf-validator {:git/url "https://github.com/Swirrl/rdf-validator.git"
-                                                               :sha "fd848fabc5718f876f99ee4ee5a3f89ea8529571"}}
+                                                               :sha "c85338c44be9f7f9726c30dca4aa47ef8bd9cfe6"}}
                            :main-opts ["-m" "rdf-validator.core"]}
                      }
  }
