@@ -12,8 +12,13 @@
     (let [r (repo/sail-repo)]
       (with-open [conn (repo/->connection r)]
         (log/info "Creating repository from directory: " (.getAbsolutePath f))
-        (doseq [df (.listFiles f)]
-          (pr/add conn (rdf/statements df))))
+        (loop [[file & files] (.listFiles f)]
+          (when file
+            (if (.isDirectory file)
+              (recur (concat files (.listFiles file)))
+              (do
+                (pr/add conn (rdf/statements file))
+                (recur files))))))
       r)
     (do
       (log/info "Creating repository from file: " (.getAbsolutePath f))
