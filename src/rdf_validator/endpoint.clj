@@ -2,10 +2,14 @@
   (:require [grafter-2.rdf4j.repository :as repo]
             [grafter-2.rdf4j.io :as rdf]
             [grafter-2.rdf.protocols :as pr]
+            [grafter-2.rdf4j.formats :as formats]
             [clojure.java.io :as io]
             [clojure.tools.logging :as log])
   (:import [java.net URISyntaxException URI]
            [java.io File]))
+
+(defn supported-file? [f]
+  (boolean (formats/filename->rdf-format f)))
 
 (defn file->repository [^File f]
   (if (.isDirectory f)
@@ -17,7 +21,8 @@
             (if (.isDirectory file)
               (recur (concat files (.listFiles file)))
               (do
-                (pr/add conn (rdf/statements file))
+                (if (supported-file? file)
+                  (pr/add conn (rdf/statements file)))
                 (recur files))))))
       r)
     (do
