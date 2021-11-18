@@ -1,7 +1,6 @@
 # Defining test suites
 
-A test suite defines a group of tests to be run. A test suite can be created from a single test file or a directory containing test files as shown in the
-examples above. A test suite can also be defined within an EDN file that lists the tests it contains. The minimal form of this EDN file is:
+A test suite defines a group of tests to be run. You can call a the validator with a single file or a directory of files. A test suite can also be defined within an EDN file that lists the tests it contains. The minimal form of this EDN file is:
 
 ```clojure
 {
@@ -11,9 +10,7 @@ examples above. A test suite can also be defined within an EDN file that lists t
 }
 ```
 
-Each key in the top-level map defines a test suite and the corresponding value contains the suite definition. Each test definition in the associated
-list should be a path to a test file relative to the suite definition file. The type and name of each test is derived from the test file name. These
-can be stated explicitly by defining tests within a map:
+Each key in the top-level map defines a test suite and the corresponding value contains the suite definition. Each test definition in the associated list should be a path to a test file relative to the suite definition file. The type and name of each test is derived from the test file name. These can be stated explicitly by defining tests within a map:
 
 ```clojure
 {
@@ -27,8 +24,9 @@ can be stated explicitly by defining tests within a map:
 }
 ```
 
-When defining test definitions explicitly, only the `:source` key is required, the type and name will be derived from the test file name if not
-provided. The two styles of defining tests can be combined within a test suite definition as defined above.
+When defining test definitions explicitly, only the `:source` key is required, the type and name will be derived from the test file name if not provided.
+
+As described in the documentation on [writing test cases](/doc/WRITING_TEST_CASES.md), you can choose between `ASK` and `SELECT` queries. Both types can be combined within a test suite definition.
 
 ## Combining test suites
 
@@ -68,7 +66,7 @@ same suite file. For example given two test files:
 
 this is valid as long as `suite1.edn` is provided as a suite whenever `suite2.edn` is required e.g.
 
-    clojure -A:rdf-validator --endpoint data.ttl --suite suite1.edn --suite suite2.edn
+    $ clojure -M:rdf-validator --endpoint data.ttl --suite suite1.edn --suite suite2.edn
 
 ### Running individual suites
 
@@ -87,8 +85,8 @@ to the command-line invocation e.g.
  :suite3 ["test5.sparql"]}
 ```
 
-    clojure -A:rdf-validator --endpoint data.ttl --suite tests.edn suite2 suite3
+    $ clojure -M:rdf-validator --endpoint data.ttl --suite tests.edn suite2 suite3
 
 This will execute the tests defined within `suite2` and `suite3` within `tests.edn`.
 
-    $ clojure -A:rdf-validator --endpoint data.ttl --suite bad_predicate.sparql --variables variables.edn
+    $ clojure -M:rdf-validator --endpoint data.ttl --suite bad_predicate.sparql --variables variables.edn

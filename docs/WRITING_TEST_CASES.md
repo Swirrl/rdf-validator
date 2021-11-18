@@ -1,36 +1,51 @@
 # Writing test cases
 
-Test cases are expressed as either SPARQL ASK or SELECT queries. These queries are run against the target endpoint and the outcome of the test is based on the
-result of the query execution.
+Test cases are expressed as either SPARQL ASK or SELECT queries.
 
-## ASK queries
+- `ASK` queries are considered to have failed if they evaluate to `true` so should be written to find invalid statements.
+- `SELECT` queries are considered to have failed if they return any matching solutions.
 
-SPARQL ASK queries are considered to have failed if they evaluate to `true` so should be written to find invalid statements.
-This is consistent with the queries defined in the RDF data cube specification.
+We recommend that you prefer using `SELECT` queries as then the results provide an indication as to the cause of the problem.
 
-## SELECT queries
+For example this query is a port of [IC-1 from the RDF Data Cube specification](https://www.w3.org/TR/vocab-data-cube/#ic-1) into `SELECT` style. It will return any `qb:Observation`s that are not also in a `qb:dataSet`:
 
-SPARQL SELECT queries are considered to have failed if they return any matching solutions. Like ASK queries they should return bindings describing invalid resources.
-
-## Query variables
-
-Validation queries can be parameterised with query variables which must be provided when the test suite is run. Query variables have the format `{{variable-name}}`
-within a query file. For example to validate no statements exist with a specified predicate, the following query could be defined:
-
-*bad_predicate.sparql*
 ```sparql
-SELECT ?this WHERE {
-  ?this <{{bad-predicate}}>> ?o .
+PREFIX qb: <http://purl.org/linked-data/cube#>
+
+SELECT (?obs AS ?obsWithNoDataset)
+WHERE {
+  {
+    # Check observation has a data set
+    ?obs a qb:Observation .
+    FILTER NOT EXISTS { ?obs qb:dataSet ?dataset1 . }
+  }
 }
 ```
 
-when running this test case, the value of `bad-predicate` must be provided. This is done by providing an EDN file containing variable
-bindings. The EDN document should contain a map from keywords to the corresponding string values e.g.
+Some more example `SELECT` queries for validating RDF Data cubes can be [found here](https://github.com/Swirrl/pmd-rdf-validations/tree/master/pmd-qb/src/swirrl/validations/pmd-qb).
 
-*variables.edn*
-```clojure
-{ :bad-predicate "http://to-be-avoided"
-  :other-variable "http://other" }
+## Query templates
+
+You can write SPARQL validations with handlebars-style templates that will be pre-processed with [selmer](https://github.com/yogthos/Selmer). This let's you include variables like `{{ myvariable }}` in your query templates. To set the values, pass a map of bindings in [edn](https://github.com/edn-format/edn) format using the `--variables` CLI option.
+
+For example, if you have a `followers-have-names.sparql` template including the variable `person`:
+
+```sparql
+PREFIX schema: <https://schema.org/>
+
+SELECT ?follower WHERE {
+  ?follower schema:follows <{{ person }}> .
+
+  FILTER NOT EXISTS { ?follower scheme:name ?name }
+}
 ```
 
-the file of variable bindings is specified when running the test case(s) using the `--variables` parameter e.g.
+And a `person.edn` data file include the bindings in a map from the variable name (as a [keyword](https://github.com/edn-format/edn#keywords)) to a string value that will be interpolated in it's place:
+
+```clojure
+{:person "http://example.net/id/person/Ada"}
+```
+
+Then you can call it like:
+
+    $ clojure -M:rdf-validator --suite followers-have-names.sparql --variables person.edn --endpoint http://some.domain/sparql/query
