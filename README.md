@@ -32,7 +32,7 @@ Once clojure is installed you can create a new directory and add a `deps.edn` fi
  {:rdf-validator
   {:extra-deps
    { swirrl/rdf-validator {:git/url "https://github.com/Swirrl/rdf-validator.git"
-                           :sha "fd848fabc5718f876f99ee4ee5a3f89ea8529571"}}
+                           :sha "4a81411e713adbaad12b32bc800e8bef7175d93e"}}
    :main-opts ["-m" "rdf-validator.core"]}}}
 ```
 
@@ -110,7 +110,7 @@ For example, we can include a specific version of the `qb` suite from [pmd-rdf-v
 {:aliases ;; as above
  :deps
  { swirrl/validations.qb {:git/url "git@github.com:Swirrl/pmd-rdf-validations.git"
-                          :sha "63479f200a7c3d1b0e63bc43b2617181644c846b"
+                          :sha "b8c6f8fcee9ed7e00f6b5aad4d691b441cd5428b"
                           :deps/manifest :deps
                           :deps/root "qb"}}}
 ```
