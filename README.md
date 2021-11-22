@@ -2,7 +2,7 @@
 
 A Simple runner for RDF test cases & validations.
 
-RDF Validator runs a collection of test cases against a SPARQL endpoint. The endpoint can be either a HTTP(s) SPARQL endpoint or a file or directory of RDF files on disk. Test cases can be specified as either a SPARQL query file containing either
+RDF Validator runs a collection of test cases against a SPARQL endpoint. The endpoint can be either a HTTP(s) SPARQL endpoint or a file or directory of RDF files on disk. Test cases can be specified as either a single SPARQL query file containing either
 an `ASK` or a `SELECT` query, or a suite of such files with a suite manifest.
 
 Main features:
