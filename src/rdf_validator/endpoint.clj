@@ -2,18 +2,28 @@
   (:require [grafter-2.rdf4j.repository :as repo]
             [grafter-2.rdf4j.io :as rdf]
             [grafter-2.rdf.protocols :as pr]
+            [grafter-2.rdf4j.formats :as formats]
             [clojure.java.io :as io]
             [clojure.tools.logging :as log])
   (:import [java.net URISyntaxException URI]
            [java.io File]))
+
+(defn supported-file? [f]
+  (boolean (formats/filename->rdf-format f)))
 
 (defn file->repository [^File f]
   (if (.isDirectory f)
     (let [r (repo/sail-repo)]
       (with-open [conn (repo/->connection r)]
         (log/info "Creating repository from directory: " (.getAbsolutePath f))
-        (doseq [df (.listFiles f)]
-          (pr/add conn (rdf/statements df))))
+        (loop [[file & files] (.listFiles f)]
+          (when file
+            (if (.isDirectory file)
+              (recur (concat files (.listFiles file)))
+              (do
+                (if (supported-file? file)
+                  (pr/add conn (rdf/statements file)))
+                (recur files))))))
       r)
     (do
       (log/info "Creating repository from file: " (.getAbsolutePath f))

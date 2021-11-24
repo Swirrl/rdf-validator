@@ -21,7 +21,7 @@
 (deftest parse-repository-directory-test
   (let [dir-str "test/data/test-dir"
         repo (parse-repository dir-str)]
-    (is (= 2 (count (with-open [conn (repo/->connection repo)]
+    (is (= 3 (count (with-open [conn (repo/->connection repo)]
                       (into [] (rdf/statements conn))))))))
 
 (deftest parse-repository-file-name-test

@@ -113,7 +113,7 @@
                  ;;TODO: check file exists
                  true) "File does not exist"]
     :assoc-fn conj-in]
-   ["-e" "--endpoint ENDPOINT" "SPARQL data endpoint to validate"
+   ["-e" "--endpoint ENDPOINT" "SPARQL endpoint or RDF file/ directory to validate"
     :parse-fn endpoint/parse-repository]
    ["-g" "--graph GRAPH" "Graph to include in the RDF dataset"
     :default []
