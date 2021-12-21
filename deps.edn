@@ -10,7 +10,7 @@
         grafter/grafter {:mvn/version "2.1.7"}
         org.apache.jena/apache-jena-libs {:mvn/version "3.10.0" :extension "pom"}
         selmer/selmer {:mvn/version "1.12.0"}
-        com.stuartsierra/dependency {:mvn/version "0.2.0"}}
+        com.stuartsierra/dependency {:mvn/version "1.0.0"}}
  :paths ["src" "resources"]
 
  :aliases {:dev {:extra-deps {lambdaisland/kaocha {:mvn/version "0.0-601"}
