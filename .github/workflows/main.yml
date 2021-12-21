@@ -1,0 +1,21 @@
+name: Clojure Dependency Checking
+
+on:
+  schedule:
+  - cron: "17 13 * * 1-5"
+  
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Latest Commit
+      uses: actions/checkout@v1
+
+    - name: Check deps
+      uses: nnichols/clojure-dependency-update-action@v3
+      with:
+        skips: leiningen
+        github-token: ${{ secrets.github_token }}
+
