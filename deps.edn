@@ -6,7 +6,7 @@
         ;; API/library.
         org.clojure/tools.cli {:mvn/version "1.0.206"}
 
-        org.clojure/tools.logging {:mvn/version "1.0.0"}
+        org.clojure/tools.logging {:mvn/version "1.2.3"}
         grafter/grafter {:mvn/version "2.1.18"}
         org.apache.jena/apache-jena-libs {:mvn/version "4.3.2" :extension "pom"}
         selmer/selmer {:mvn/version "1.12.0"}
