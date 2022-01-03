@@ -9,11 +9,11 @@
         org.clojure/tools.logging {:mvn/version "1.2.3"}
         grafter/grafter {:mvn/version "2.1.18"}
         org.apache.jena/apache-jena-libs {:mvn/version "4.3.2" :extension "pom"}
-        selmer/selmer {:mvn/version "1.12.45"}
+        selmer/selmer {:mvn/version "1.12.48"}
         com.stuartsierra/dependency {:mvn/version "1.0.0"}}
  :paths ["src" "resources"]
 
- :aliases {:dev {:extra-deps {lambdaisland/kaocha {:mvn/version "1.60.972"}
+ :aliases {:dev {:extra-deps {lambdaisland/kaocha {:mvn/version "1.60.977"}
                               swirrl/validations.misc {:git/url "https://github.com/Swirrl/pmd-rdf-validations.git"
                                                        :sha "b57cadccbb801fca981c83c2eaccfa4a0cd9f3bc"
                                                        :deps/manifest :deps
@@ -23,6 +23,6 @@
 
            :app {:extra-paths ["app-resources"]
                  :extra-deps {org.slf4j/slf4j-api {:mvn/version "1.7.32"}
-                              org.apache.logging.log4j/log4j-api {:mvn/version "2.17.0"}
-                              org.apache.logging.log4j/log4j-core {:mvn/version "2.17.0"}
-                              org.apache.logging.log4j/log4j-slf4j-impl {:mvn/version "2.17.0"}}}}}
+                              org.apache.logging.log4j/log4j-api {:mvn/version "2.17.1"}
+                              org.apache.logging.log4j/log4j-core {:mvn/version "2.17.1"}
+                              org.apache.logging.log4j/log4j-slf4j-impl {:mvn/version "2.17.1"}}}}}
