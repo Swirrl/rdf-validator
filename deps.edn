@@ -13,7 +13,7 @@
         com.stuartsierra/dependency {:mvn/version "1.0.0"}}
  :paths ["src" "resources"]
 
- :aliases {:dev {:extra-deps {lambdaisland/kaocha {:mvn/version "1.60.977"}
+ :aliases {:dev {:extra-deps {lambdaisland/kaocha {:mvn/version "1.66.1034"}
                               swirrl/validations.misc {:git/url "https://github.com/Swirrl/pmd-rdf-validations.git"
                                                        :sha "b57cadccbb801fca981c83c2eaccfa4a0cd9f3bc"
                                                        :deps/manifest :deps
