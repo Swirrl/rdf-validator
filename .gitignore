@@ -13,3 +13,4 @@ pom.xml.asc
 .cpcache
 /test-results/
 /.envrc
+/.clj-kondo/
