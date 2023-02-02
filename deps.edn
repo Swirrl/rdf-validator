@@ -7,13 +7,15 @@
         org.clojure/tools.cli {:mvn/version "1.0.214"}
 
         org.clojure/tools.logging {:mvn/version "1.2.4"}
-        grafter/grafter {:mvn/version "2.1.18"}
+        io.github.swirrl/grafter.repository {:mvn/version "3.0.0"}
         org.apache.jena/apache-jena-libs {:mvn/version "4.7.0" :extension "pom"}
         selmer/selmer {:mvn/version "1.12.55"}
         com.stuartsierra/dependency {:mvn/version "1.0.0"}}
  :paths ["src" "resources"]
 
  :aliases {:dev {:extra-deps {lambdaisland/kaocha {:mvn/version "1.71.1119"}
+                              lambdaisland/kaocha-junit-xml {:mvn/version "1.17.101"}
+
                               swirrl/validations.misc {:git/url "https://github.com/Swirrl/pmd-rdf-validations.git"
                                                        :sha "b57cadccbb801fca981c83c2eaccfa4a0cd9f3bc"
                                                        :deps/manifest :deps

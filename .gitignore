@@ -11,3 +11,6 @@ pom.xml.asc
 .hg/
 .idea/
 .cpcache
+/test-results/
+/.envrc
+/.clj-kondo/
