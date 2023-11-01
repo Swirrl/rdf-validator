@@ -26,5 +26,5 @@
            :app {:extra-paths ["app-resources"]
                  :extra-deps {org.slf4j/slf4j-api {:mvn/version "2.0.6"}
                               org.apache.logging.log4j/log4j-api {:mvn/version "2.21.1"}
-                              org.apache.logging.log4j/log4j-core {:mvn/version "2.19.0"}
+                              org.apache.logging.log4j/log4j-core {:mvn/version "2.21.1"}
                               org.apache.logging.log4j/log4j-slf4j-impl {:mvn/version "2.19.0"}}}}}
