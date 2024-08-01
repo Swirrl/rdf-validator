@@ -4,7 +4,7 @@
         ;; TODO strictly speaking we should move this dep into app
         ;; alias and refactor so rdf-validator.core is separated from
         ;; API/library.
-        org.clojure/tools.cli {:mvn/version "1.0.214"}
+        org.clojure/tools.cli {:mvn/version "1.1.230"}
 
         org.clojure/tools.logging {:mvn/version "1.2.4"}
         io.github.swirrl/grafter.repository {:mvn/version "3.0.0"}
